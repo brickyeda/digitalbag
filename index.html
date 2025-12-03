@@ -2068,35 +2068,6 @@ padding: 0px 10px 10px 10px;
 }
 
 
-.notebook-page::after {
-  content: '';
-  position: absolute;
-  top: 30px;
-  right: 23px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  box-shadow: 
-    0 0 0 2px white,
-    0 0 0 3px #c0c0c0,
-    0 50px 0 0 white,
-    0 50px 0 2px white,
-    0 50px 0 3px #c0c0c0,
-    0 100px 0 0 white,
-    0 100px 0 2px white,
-    0 100px 0 3px #c0c0c0,
-    0 150px 0 0 white,
-    0 150px 0 2px white,
-    0 150px 0 3px #c0c0c0,
-    0 200px 0 0 white,
-    0 200px 0 2px white,
-    0 200px 0 3px #c0c0c0,
-    0 250px 0 0 white,
-    0 250px 0 2px white,
-    0 250px 0 3px #c0c0c0;
-  z-index: 2;
-}
-
     .notebook-title {
       font-size: 1.8rem;
       font-weight: 600;
@@ -2415,7 +2386,7 @@ padding: 0px 10px 10px 10px;
 
 /* תוסיף ריפוד לתוכן כדי שלא יוסתר */
 #notebookContent {
-  margin-top: 80px; /* גובה הסרגל + מרווח */
+  margin-top: 100px; /* גובה סרגל הכלים הראשי + סרגל הציור + מרווחים */
 }
 
     .toolbar-group {
@@ -2847,21 +2818,23 @@ background: rgba(24, 9, 236, 0.9);
 
 /* Drawing Toolbar - Vertical Sidebar */
 .drawing-toolbar {
-  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
   border: 2px solid var(--border-color);
-  border-radius: 15px;
-  padding: 20px 15px;
+  border-radius: 10px;
+  padding: 8px 20px;
   display: flex;
-  flex-direction: column;
-  gap: 20px;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
   box-shadow: 0 4px 12px var(--shadow-light);
   position: fixed;
-  right: 20px;
-  top: 100px;
-  width: 200px;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-  z-index: 100;
+  left: 265px;
+  right: 265px;
+  top: 190px;
+  height: 60px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  z-index: 85;
   transition: all 0.3s ease;
 }
 
@@ -2870,70 +2843,73 @@ background: rgba(24, 9, 236, 0.9);
 }
 
 .drawing-title {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: white;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   text-align: center;
-  padding-bottom: 15px;
-  border-bottom: 2px solid rgba(255,255,255,0.3);
+  padding-right: 15px;
+  border-right: 2px solid rgba(255,255,255,0.3);
+  white-space: nowrap;
 }
 
 .drawing-title span {
-  font-size: 1.8rem;
+  font-size: 1.4rem;
 }
 
 .drawing-controls {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 15px;
-  overflow-y: auto;
-  max-height: calc(100vh - 200px);
-  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: auto;
+  flex: 1;
 }
 
 .drawing-section {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
-  padding: 12px 0;
-  border-top: 2px solid rgba(255,255,255,0.2);
-  width: 100%;
+  padding: 0 15px;
+  border-right: 2px solid rgba(255,255,255,0.2);
+  height: 100%;
+  white-space: nowrap;
 }
 
 .drawing-section:first-of-type {
-  border-top: none;
-  padding-top: 0;
+  border-right: none;
+  padding-right: 0;
 }
 
 .drawing-section label {
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   white-space: nowrap;
   text-align: center;
-  margin-bottom: 5px;
+  margin-left: 5px;
 }
 
 .drawing-btn {
   background: white;
   border: 2px solid #ddd;
   border-radius: 8px;
-  padding: 10px;
+  padding: 8px;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: var(--text-primary);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
 }
 
 .drawing-btn:hover {
@@ -2954,10 +2930,11 @@ background: rgba(24, 9, 236, 0.9);
   border: 2px solid #ddd;
   border-radius: 8px;
   padding: 8px 6px;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--text-primary);
   cursor: pointer;
-  width: 100%;
+  width: auto;
+  min-width: 80px;
   text-align: center;
   font-weight: 500;
 }
@@ -2968,8 +2945,8 @@ background: rgba(24, 9, 236, 0.9);
 }
 
 .drawing-color-picker {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border: 3px solid white;
   border-radius: 8px;
   cursor: pointer;
@@ -2977,11 +2954,10 @@ background: rgba(24, 9, 236, 0.9);
 }
 
 .drawing-slider {
-  width: 50px;
-  height: 100px;
-  -webkit-appearance: slider-vertical;
-  writing-mode: bt-lr;
-  orientation: vertical;
+  width: 100px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
   background: rgba(255,255,255,0.3);
   border-radius: 4px;
   outline: none;
@@ -3010,7 +2986,7 @@ background: rgba(24, 9, 236, 0.9);
 
 .thickness-display {
   color: white;
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-align: center;
   background: rgba(255,255,255,0.2);
@@ -3025,26 +3001,27 @@ background: rgba(24, 9, 236, 0.9);
 /* Shape Options Dropdown - Adjusted for sidebar */
 /* Shape Options Dropdown */
 .shape-dropdown {
-  position: static;  /* שונה מ-relative ל-static */
-  width: 100%;
+  position: relative;
+  display: inline-block;
 }
 
 .shape-dropdown .drawing-btn {
-  margin: 0 auto;  /* מרכז את הכפתור */
+  margin: 0;
 }
 
 .shape-options {
   display: none;
-  position: fixed;  /* שונה מ-absolute ל-fixed */
-  left: 1500px;  /* מרחק מצד שמאל של המסך */
-  top: 50%;  /* אמצע המסך */
-  transform: translateY(-50%);  /* מרכז אנכית */
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
   background: white;
   border: 2px solid #ddd;
   border-radius: 10px;
   padding: 10px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  z-index: 2000;  /* מאוד גבוה */
+  z-index: 2000;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   min-width: 250px;
@@ -3303,6 +3280,7 @@ background: rgba(24, 9, 236, 0.9);
 }
 /* Scrollbar for toolbar */
 .drawing-toolbar::-webkit-scrollbar {
+  height: 4px;
   width: 4px;
 }
 
@@ -4300,14 +4278,14 @@ body:has(.mode-btn[data-mode="programmer"].active) .programmer-displays {
 <!-- Drawing Toolbar - Vertical Sidebar -->
 <div class="drawing-toolbar" id="drawingToolbar">
   
-  <div class="drawing-title" style="padding-top: 10px;">
+  <div class="drawing-title">
     <span>🎨</span>
-    <div style="font-size: 0.7rem; line-height: 1.2;">כלי<br>ציור</div>
+    <div style="font-size: 0.8rem;">כלי ציור</div>
   </div>
 
   <!-- כפתור הפעלה/כיבוי -->
-  <button class="drawing-btn" id="drawingModeBtn" onclick="app.drawing.toggleDrawingMode()" style="width: 100%; background: #27ae60; color: white; font-size: 0.75rem; padding: 12px 8px; height: auto;">
-    <span style="font-size: 1.2rem;">🎨</span><br>
+  <button class="drawing-btn" id="drawingModeBtn" onclick="app.drawing.toggleDrawingMode()" style="width: auto; background: #27ae60; color: white; font-size: 0.7rem; padding: 8px 16px; height: 40px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+    <span style="font-size: 1rem;">🎨</span>
     <span id="drawingModeText">הפעל ציור</span>
   </button>
 
@@ -4510,7 +4488,7 @@ body:has(.mode-btn[data-mode="programmer"].active) .programmer-displays {
         </div>
       </div>
 
-<div class="page-header" style="position: sticky; top: 70px; z-index: 100; background: var(--background-main); padding-top: 20px; padding-bottom: 20px;">
+<div class="page-header" style="position: sticky; top: 260px; z-index: 100; background: var(--background-main); padding-top: 5px; padding-bottom: 5px;">
   <h1 class="page-title" id="currentNotebookTitle">
     <span id="currentNotebookIcon">📚</span>
     <span id="currentNotebookName">מחברת</span>
