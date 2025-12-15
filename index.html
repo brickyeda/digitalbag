@@ -2086,6 +2086,7 @@ padding: 0px 10px 10px 10px;
     inset 0 0 50px rgba(0,0,0,0.02),
     0 10px 30px rgba(0,0,0,0.1);
   border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 /* שוליים אדומים בצד */
@@ -2205,6 +2206,7 @@ padding: 0px 10px 10px 10px;
     inset 0 0 50px rgba(0,0,0,0.02),
     0 10px 30px rgba(0,0,0,0.1);
   border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 .grid-page::after {
@@ -2304,7 +2306,7 @@ padding: 0px 10px 10px 10px;
     0 10px 40px rgba(0,0,0,0.12),
     0 2px 8px rgba(0,0,0,0.06);
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid #e0e0e0;
 }
 
 /* טקסטורת נייר עדינה */
@@ -2817,6 +2819,29 @@ background: rgba(24, 9, 236, 0.9);
 
 
 /* Drawing Toolbar - Vertical Sidebar */
+/* כפתור צף להפעלת סרגל הציור */
+.drawing-toolbar-toggle {
+  position: relative;
+  display: inline-flex;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: 3px solid white;
+  box-shadow: 0 4px 12px var(--shadow-medium);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.4rem;
+  margin-left: 15px;
+}
+
+.drawing-toolbar-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px var(--shadow-medium);
+}
+
 .drawing-toolbar {
   background: linear-gradient(90deg, #6366f1, #8b5cf6);
   border: 2px solid var(--border-color);
@@ -2828,14 +2853,24 @@ background: rgba(24, 9, 236, 0.9);
   gap: 15px;
   box-shadow: 0 4px 12px var(--shadow-light);
   position: fixed;
-  left: 265px;
-  right: 265px;
-  top: 190px;
-  height: 60px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  z-index: 85;
-  transition: all 0.3s ease;
+  left: 310px;
+  top: 130px;
+  max-width: 850px;
+  height: 90px;
+  overflow: visible;
+  z-index: 1050;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-30px);
+  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.drawing-toolbar.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 .drawing-toolbar:hover {
@@ -3025,10 +3060,22 @@ background: rgba(24, 9, 236, 0.9);
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
   min-width: 250px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* פתיחה בריחוף */
+.shape-dropdown:hover .shape-options {
+  display: grid;
+  opacity: 1;
+  visibility: visible;
 }
 
 .shape-options.show {
   display: grid;
+  opacity: 1;
+  visibility: visible;
 }
 
 .shape-option {
@@ -3295,6 +3342,24 @@ background: rgba(24, 9, 236, 0.9);
 
 .drawing-toolbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.6);
+}
+
+/* Scrollbar for drawing-controls - זה מה שבאמת רואים! */
+.drawing-controls::-webkit-scrollbar {
+  height: 6px;
+}
+
+.drawing-controls::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.drawing-controls::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.3);
+  border-radius: 10px;
+}
+
+.drawing-controls::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.5);
 }
 
 /* Drawing Layer */
@@ -4897,21 +4962,20 @@ height: 100%;
       <button class="drawing-btn" id="eraserBtn" onclick="app.drawing.selectTool('eraser')" title="מחק">
         🧹
       </button>
-      <div class="shape-dropdown">
-        <button class="drawing-btn" id="shapeBtn" onclick="app.drawing.toggleShapeMenu()" title="צורות">
-          ▢
-        </button>
-        <div class="shape-options" id="shapeOptions">
-          <div class="shape-option" onclick="app.drawing.selectShape('circle')">⭕ עיגול</div>
-          <div class="shape-option" onclick="app.drawing.selectShape('square')">⬜ ריבוע</div>
-          <div class="shape-option" onclick="app.drawing.selectShape('rectangle')">▬ מלבן</div>
-          <div class="shape-option" onclick="app.drawing.selectShape('triangle')">🔺 משולש</div>
-          <div class="shape-option" onclick="app.drawing.selectShape('line')">➖ קו</div>
-          <div class="shape-option" onclick="app.drawing.selectShape('arrow')">➡️ חץ</div>
-          <div class="shape-option" onclick="app.drawing.selectShape('star')">⭐ כוכב</div>
-          <div class="shape-option" onclick="app.drawing.selectShape('heart')">❤️ לב</div>
-          <div class="shape-option" onclick="app.drawing.selectShape('diamond')">💎 מעויין</div>
-        </div>
+      <div class="drawing-section">
+        <label>צורות</label>
+        <select class="drawing-select" id="shapeSelect" onchange="app.drawing.selectShape(this.value)">
+          <option value="">בחר צורה</option>
+          <option value="circle">⭕ עיגול</option>
+          <option value="square">⬜ ריבוע</option>
+          <option value="rectangle">▬ מלבן</option>
+          <option value="triangle">🔺 משולש</option>
+          <option value="line">➖ קו</option>
+          <option value="arrow">➡️ חץ</option>
+          <option value="star">⭐ כוכב</option>
+          <option value="heart">❤️ לב</option>
+          <option value="diamond">💎 מעויין</option>
+        </select>
       </div>
     </div>
 
@@ -5078,14 +5142,18 @@ height: 100%;
         </div>
 
         <!-- Current Page Indicator -->
-        <div class="toolbar-group">
+        <div class="toolbar-group" style="display: flex; align-items: center; gap: 10px;">
           <span id="inPageIndicator" style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;">
-            בחר דף לעריכה
+ציור
           </span>
+          <!-- כפתור צף לסרגל כלי ציור -->
+          <div class="drawing-toolbar-toggle" id="drawingToolbarToggle" onclick="app.drawing.enableDrawingMode()">
+            🎨
+          </div>
         </div>
       </div>
 
-<div class="page-header" style="position: sticky; top: 260px; z-index: 100; background: var(--background-main); padding-top: 5px; padding-bottom: 5px;">
+<div class="page-header" style="position: sticky; top: 150px; z-index: 100; background: var(--background-main); padding-top: 5px; padding-bottom: 5px;">
   <h1 class="page-title" id="currentNotebookTitle">
     <span id="currentNotebookIcon">📚</span>
     <span id="currentNotebookName">מחברת</span>
@@ -11231,6 +11299,15 @@ toggleDrawingMode() {
 },
 
 enableDrawingMode() {
+  // עדכן את כפתור "הפעל ציור"
+  const btn = document.getElementById('drawingModeBtn');
+  const btnText = document.getElementById('drawingModeText');
+  if (btn && !btn.classList.contains('active')) {
+    btn.classList.add('active');
+    btnText.textContent = 'כתיבה רגילה';
+    btn.style.background = '#e74c3c';
+  }
+  
   const notebookContent = document.getElementById('notebookContent');
   if (!notebookContent) return;
   
@@ -11558,10 +11635,9 @@ drawShapeOnCanvas(ctx, startX, startY, x, y) {
   },
 
   selectShape(shape) {
+    if (!shape) return; // אם לא נבחרה צורה
     this.currentShape = shape;
-    this.currentTool = 'shape';
-    const menu = document.getElementById('shapeOptions');
-    if (menu) menu.classList.remove('show');
+    this.selectTool('shape');
   },
 
   changePencilType(type) {
@@ -13136,6 +13212,43 @@ calculateBitwise(first, second, operation) {
     document.addEventListener('DOMContentLoaded', function() {
       stickyNotes.init();
       timerApp.init();
+      
+      // ניהול סרגל כלי הציור
+      const toggle = document.getElementById('drawingToolbarToggle');
+      const toolbar = document.getElementById('drawingToolbar');
+      let isToolbarOpen = false;
+      let closeTimeout;
+
+      // פתיחת הסרגל בריחוף על הכפתור
+      toggle.addEventListener('mouseenter', function() {
+        clearTimeout(closeTimeout);
+        toolbar.classList.add('show');
+        isToolbarOpen = true;
+      });
+
+      // שמירה על הסרגל פתוח כשהעכבר עובר לתוכו
+      toolbar.addEventListener('mouseenter', function() {
+        clearTimeout(closeTimeout);
+        isToolbarOpen = true;
+      });
+
+      // סגירת הסרגל כשהעכבר יוצא מהכפתור
+      toggle.addEventListener('mouseleave', function() {
+        closeTimeout = setTimeout(function() {
+          if (isToolbarOpen) {
+            toolbar.classList.remove('show');
+            isToolbarOpen = false;
+          }
+        }, 300);
+      });
+
+      // סגירת הסרגל כשהעכבר יוצא ממנו
+      toolbar.addEventListener('mouseleave', function() {
+        closeTimeout = setTimeout(function() {
+          toolbar.classList.remove('show');
+          isToolbarOpen = false;
+        }, 300);
+      });
     });
 
   </script>
