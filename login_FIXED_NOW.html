@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ילקוט דיגיטלי - כניסה</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      direction: rtl;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+      max-width: 450px;
+      width: 90%;
+    }
+    h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 30px;
+      font-size: 2rem;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.3s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .toggle {
+      text-align: center;
+      margin-top: 20px;
+      color: #7f8c8d;
+    }
+    .toggle a {
+      color: #667eea;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .toggle a:hover {
+      text-decoration: underline;
+    }
+    .forgot-password {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    .forgot-password a {
+      color: #e74c3c;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+    .message {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+      display: none;
+    }
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-size: 1.2rem;
+      color: #667eea;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎒 ילקוט דיגיטלי</h1>
+    
+    <div id="message" class="message"></div>
+    
+    <!-- טופס התחברות -->
+    <div id="loginForm">
+      <h2 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">התחברות</h2>
+      <div class="form-group">
+        <label>האי-מייל שלך</label>
+        <input type="text" id="loginUsername" placeholder="האי-מייל שלך">
+      </div>
+      <div class="form-group">
+        <label>סיסמה</label>
+        <input type="password" id="loginPassword" placeholder="הזן סיסמה">
+      </div>
+      <button onclick="handleLogin()">התחבר</button>
+      <div class="forgot-password">
+        <a onclick="showForgotPassword()">שכחת סיסמה?</a>
+      </div>
+      <div class="toggle">
+        אין לך חשבון? <a onclick="showRegister()">הירשם כאן</a>
+      </div>
+    </div>
+    
+    <!-- טופס הרשמה -->
+    <div id="registerForm" style="display: none;">
+      <h2 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">הרשמה</h2>
+      <div class="form-group">
+        <label>שם משתמש</label>
+        <input type="text" id="registerUsername" placeholder="בחר שם משתמש">
+      </div>
+      <div class="form-group">
+        <label>אימייל <span style="color: #e74c3c;">*</span></label>
+        <input type="email" id="registerEmail" placeholder="your@email.com" required>
+      </div>
+      <div class="form-group">
+        <label>סיסמה</label>
+        <input type="password" id="registerPassword" placeholder="בחר סיסמה חזקה">
+      </div>
+      <div class="form-group">
+        <label>אימות סיסמה</label>
+        <input type="password" id="registerPasswordConfirm" placeholder="הזן סיסמה שוב">
+      </div>
+      <button onclick="handleRegister()">הירשם</button>
+      <div class="toggle">
+        כבר יש לך חשבון? <a onclick="showLogin()">התחבר כאן</a>
+      </div>
+    </div>
+    
+    <!-- טופס איפוס סיסמה -->
+    <div id="forgotPasswordForm" style="display: none;">
+      <h2 style="text-align: center; margin-bottom: 20px; color: #2c3e50;">איפוס סיסמה</h2>
+      <p style="text-align: center; color: #7f8c8d; margin-bottom: 20px; font-size: 0.9rem;">
+        הזן את כתובת המייל שלך ונשלח לך קישור לאיפוס הסיסמה
+      </p>
+      <div class="form-group">
+        <label>אימייל</label>
+        <input type="email" id="resetEmail" placeholder="your@email.com">
+      </div>
+      <button onclick="handleForgotPassword()">שלח קישור לאיפוס</button>
+      <div class="toggle">
+        <a onclick="showLogin()">חזור להתחברות</a>
+      </div>
+    </div>
+    
+    <!-- מסך טעינה -->
+    <div id="loading" style="display: none;">
+      <div class="loading">
+        <div>⏳ טוען אפליקציה...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // הגדרות Supabase
+    const SUPABASE_URL = 'https://ditiequwboxbiqrzvfhr.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpdGllcXV3Ym94Ymlxcnp2ZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NDQ4NDUsImV4cCI6MjA4MTQyMDg0NX0.HM6FhOilvJJnLpooweEQjuXmdUBEZ9jc-59jIS_be_k';
+    
+    let supabaseClient = null;
+    
+    // המתנה ל-Supabase SDK
+    window.addEventListener('load', function() {
+      console.log('🔄 דף נטען, בודק Supabase...');
+      
+      let attempts = 0;
+      const maxAttempts = 20;
+      
+      function checkSupabase() {
+        attempts++;
+        console.log(`ניסיון ${attempts}/${maxAttempts}`);
+        
+        if (typeof window.supabase !== 'undefined') {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          console.log('✅ Supabase מוכן!');
+          
+          // הפעל את הכפתורים
+          document.querySelectorAll('button').forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+          });
+          
+          checkSession();
+        } else if (attempts < maxAttempts) {
+          console.log('⏳ ממתין ל-Supabase...');
+          setTimeout(checkSupabase, 200);
+        } else {
+          console.error('❌ Supabase לא נטען אחרי 4 שניות');
+          showMessage('שגיאה בטעינת המערכת. אנא רענן את הדף.', true);
+        }
+      }
+      
+      // השבת כפתורים עד שSupabase מוכן
+      document.querySelectorAll('button').forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+      });
+      
+      checkSupabase();
+    });
+    
+    // בדיקת session קיים
+    async function checkSession() {
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+          console.log('✅ משתמש מחובר, מעביר לאפליקציה...');
+          // כאן תעביר ל-index11__3_.html
+          window.location.href = 'index.html';
+        }
+      } catch (error) {
+        console.error('שגיאה בבדיקת session:', error);
+      }
+    }
+    
+    // מעבר בין טפסים
+    function showRegister() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'block';
+      document.getElementById('forgotPasswordForm').style.display = 'none';
+      document.getElementById('message').style.display = 'none';
+    }
+    
+    function showLogin() {
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('forgotPasswordForm').style.display = 'none';
+      document.getElementById('message').style.display = 'none';
+    }
+    
+    function showForgotPassword() {
+      document.getElementById('loginForm').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('forgotPasswordForm').style.display = 'block';
+      document.getElementById('message').style.display = 'none';
+    }
+    
+    // איפוס סיסמה
+    async function handleForgotPassword() {
+      const email = document.getElementById('resetEmail').value.trim();
+      
+      if (!email) {
+        showMessage('אנא הזן כתובת מייל', true);
+        return;
+      }
+      
+      // בדיקת פורמט מייל
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showMessage('כתובת מייל לא תקינה', true);
+        return;
+      }
+      
+      try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+          redirectTo: 'https://brickyeda.github.io/digitalbag/reset-password-v2.html'
+        });
+        
+        if (error) {
+          console.error('שגיאה באיפוס:', error);
+          showMessage('שגיאה בשליחת המייל: ' + error.message, true);
+        } else {
+          showMessage('✅ קישור לאיפוס סיסמה נשלח למייל שלך! בדוק את תיבת הדואר (כולל ספאם)', false);
+          document.getElementById('resetEmail').value = '';
+        }
+      } catch (err) {
+        console.error('שגיאה:', err);
+        showMessage('שגיאה בשליחת המייל', true);
+      }
+    }
+    
+    // הצגת הודעות
+    function showMessage(text, isError = false) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'message ' + (isError ? 'error' : 'success');
+      msg.style.display = 'block';
+    }
+    
+    // התחברות
+    async function handleLogin() {
+      console.log('🔐 handleLogin נקרא');
+      
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      
+      console.log('Username:', username ? 'קיים' : 'ריק');
+      console.log('Password:', password ? 'קיים' : 'ריק');
+      
+      if (!username || !password) {
+        showMessage('נא למלא את כל השדות', true);
+        return;
+      }
+      
+      if (!supabaseClient) {
+        showMessage('המערכת עדיין נטענת, אנא המתן...', true);
+        return;
+      }
+      
+      const button = event.target;
+      button.disabled = true;
+      button.textContent = 'מתחבר...';
+      
+      try {
+        const email = username.includes('@') ? username : `${username}@temp.local`;
+        console.log('מנסה התחברות עם:', email);
+        
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+        
+        if (error) throw error;
+        
+        console.log('✅ התחברות הצליחה');
+        showMessage('התחברות בוצעה בהצלחה! מעביר לאפליקציה...');
+        
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ שגיאה בהתחברות:', error);
+        showMessage('שגיאה: ' + error.message, true);
+        button.disabled = false;
+        button.textContent = 'התחבר';
+      }
+    }
+    
+    // הרשמה
+    async function handleRegister() {
+      console.log('📝 handleRegister נקרא');
+      
+      const username = document.getElementById('registerUsername').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('registerPasswordConfirm').value;
+      
+      if (!username || !password) {
+        showMessage('נא למלא שם משתמש וסיסמה', true);
+        return;
+      }
+      
+      if (!email) {
+        showMessage('נא להזין כתובת אימייל', true);
+        return;
+      }
+      
+      // בדיקת פורמט אימייל
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showMessage('נא להזין כתובת אימייל תקינה', true);
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        showMessage('הסיסמאות אינן תואמות', true);
+        return;
+      }
+      
+      if (password.length < 6) {
+        showMessage('הסיסמה חייבת להכיל לפחות 6 תווים', true);
+        return;
+      }
+      
+      if (!supabaseClient) {
+        showMessage('המערכת עדיין נטענת, אנא המתן...', true);
+        return;
+      }
+      
+      const button = event.target;
+      button.disabled = true;
+      button.textContent = 'נרשם...';
+      
+      try {
+        console.log('מנסה הרשמה עם:', email);
+        
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              username: username
+            }
+          }
+        });
+        
+        if (error) throw error;
+        
+        console.log('✅ הרשמה הצליחה');
+        showMessage('הרשמה בוצעה בהצלחה! מעביר לאפליקציה...');
+        
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ שגיאה בהרשמה:', error);
+        showMessage('שגיאה: ' + error.message, true);
+        button.disabled = false;
+        button.textContent = 'הירשם';
+      }
+    }
+    
+    // Enter key support
+    document.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        if (document.getElementById('loginForm').style.display !== 'none') {
+          handleLogin();
+        } else if (document.getElementById('registerForm').style.display !== 'none') {
+          handleRegister();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
