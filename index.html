@@ -2604,6 +2604,30 @@ scrollbar-gutter: stable;
   border-top: none;
   padding-top: 0;
 }
+/* כפתור קישור לנוסחאון PDF */
+.nuschon-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: white;
+  color: #e67e22;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-radius: 10px;
+  padding: 12px 15px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.nuschon-link-btn:hover {
+  background: #fff5eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
 
 .formula-item {
   background: white;
@@ -4871,6 +4895,10 @@ height: 100%;
   </div>
   
   <div class="formulas-container">
+      <!-- כפתור קישור לנוסחאון -->
+  <a href="nuschon_math.pdf" target="_blank" class="nuschon-link-btn" title="פתח נוסחאון מתמטיקה 5 יח״ל">
+    📄 נוסחאון מלא
+  </a>
     <div class="formula-group">
       <div class="formula-item" draggable="true" data-formula="ax² + bx + c = 0" ondragstart="app.dragFormula(event)" ondragend="app.endDragFormula(event)">
         ax² + bx + c = 0
@@ -6807,7 +6835,7 @@ openGalleryView() {
   galleryNotebookName.textContent = `תצוגת גלריה - ${notebook.title}`;
   
   // Hide content, show gallery
-  notebookContent.style.display = 'none';
+document.getElementById('notebookView').style.display = 'none';
   galleryView.classList.add('active');
   
   // Generate gallery items
@@ -6820,7 +6848,7 @@ closeGalleryView() {
   const notebookContent = document.getElementById('notebookContent');
   
   galleryView.classList.remove('active');
-  notebookContent.style.display = 'block';
+document.getElementById('notebookView').style.display = 'block';
 },
 
 // Generate Gallery Items
