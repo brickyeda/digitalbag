@@ -8749,8 +8749,8 @@ async exportNotebookToPDF() {
     });
     
     const notebookContent = document.getElementById('notebookContent');
-const pagesToExport = notebookContent.querySelectorAll('.export-this-page');
-const pages = pagesToExport.length > 0 ? pagesToExport : notebookContent.querySelectorAll('.lined-page, .grid-page, .blank-page');
+    const pagesToExport = notebookContent.querySelectorAll('.export-this-page');
+    const pages = pagesToExport.length > 0 ? pagesToExport : notebookContent.querySelectorAll('.lined-page, .grid-page, .blank-page');
     
     if (pages.length === 0) {
       alert('אין דפים לייצוא');
@@ -8770,7 +8770,7 @@ const pages = pagesToExport.length > 0 ? pagesToExport : notebookContent.querySe
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#fefef8',
         logging: false,
         width: page.scrollWidth,
         height: page.scrollHeight
@@ -8791,7 +8791,7 @@ const pages = pagesToExport.length > 0 ? pagesToExport : notebookContent.querySe
     
     elementsToHide.forEach(el => el.style.display = '');
     
-const firstPage = notebook.pages && notebook.pages.length > 0 ? notebook.pages[0] : null;
+    const firstPage = notebook.pages && notebook.pages.length > 0 ? notebook.pages[0] : null;
     const pageTitle = firstPage && firstPage.title ? firstPage.title : 'ללא כותרת';
     const pageDate = firstPage && firstPage.date ? firstPage.date : '';
     const fileName = `${notebook.title}, ${pageTitle}, ${pageDate}.pdf`;
