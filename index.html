@@ -152,8 +152,20 @@
     }
 
     .user-time {
-      font-size: 0.75rem;
+      font-size: 1.3rem;
+      font-weight: 700;
+      opacity: 1;
+    }
+
+    .user-date {
+      font-size: 0.85rem;
       opacity: 0.8;
+    }
+
+    .datetime-display {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .settings-icon {
@@ -4676,7 +4688,10 @@ height: 100%;
       <div class="navbar-user">
         <div class="user-info">
           <div class="user-name" id="navUserName" style="display: none;">לא מחובר</div>
-          <div class="user-time" id="navTime">12:34</div>
+          <div class="datetime-display">
+            <div class="user-time" id="navTime">12:34</div>
+            <div class="user-date" id="navDate">01.01.2025</div>
+          </div>
         </div>
         <button class="logout-btn" id="logoutBtn" onclick="app.logout()" style="display: none;">התנתק</button>
         <div class="fullscreen-icon" id="fullscreenBtn" onclick="app.toggleFullscreen()" title="מסך מלא">⛶</div>
@@ -6422,9 +6437,18 @@ this.showPage('homepage');
           minute: '2-digit',
           hour12: false 
         });
+        const dateString = now.toLocaleDateString('he-IL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
         const timeElement = document.getElementById('navTime');
+        const dateElement = document.getElementById('navDate');
         if (timeElement) {
           timeElement.textContent = timeString;
+        }
+        if (dateElement) {
+          dateElement.textContent = dateString;
         }
       },
 
