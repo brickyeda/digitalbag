@@ -543,17 +543,24 @@
 
     .welcome-stats {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-      min-width: 300px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      min-width: 350px;
     }
 
     .stat-item {
       text-align: center;
       background: rgba(255,255,255,0.15);
       border-radius: 15px;
-      padding: 20px;
+      padding: 15px;
       backdrop-filter: blur(10px);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateY(-3px);
     }
 
     .stat-number {
@@ -565,6 +572,122 @@
     .stat-label {
       font-size: 0.9rem;
       opacity: 0.9;
+    }
+
+    /* Notifications Panel */
+    .notifications-panel {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      min-width: 320px;
+      max-width: 400px;
+      z-index: 99999;
+      color: var(--text-primary);
+      text-align: right;
+    }
+
+    .notifications-panel.show {
+      display: block;
+      animation: fadeInDown 0.3s ease;
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .notifications-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .notifications-header button {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 5px;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .notifications-header button:hover {
+      background: var(--border-color);
+      color: var(--danger-color);
+    }
+
+    .notifications-list {
+      max-height: 350px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .notification-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: var(--background-main);
+      transition: all 0.2s;
+    }
+
+    .notification-item:hover {
+      background: var(--border-color);
+    }
+
+    .notification-item.urgent {
+      background: #fff5f5;
+      border-right: 3px solid var(--danger-color);
+    }
+
+    .notification-item.warning {
+      background: #fffbeb;
+      border-right: 3px solid var(--warning-color);
+    }
+
+    .notification-icon {
+      font-size: 1.5rem;
+    }
+
+    .notification-content {
+      flex: 1;
+    }
+
+    .notification-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .notification-time {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .notification-empty {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
     }
 
     .tools-grid {
@@ -4579,21 +4702,25 @@ height: 100%;
             </button>
           </div>
           <div class="welcome-stats">
-            <div class="stat-item">
+            <div class="stat-item" onclick="app.showPage('tasks')">
               <div class="stat-number" id="todayTasks">0</div>
               <div class="stat-label">משימות היום</div>
             </div>
-            <div class="stat-item">
+            <div class="stat-item" style="position: relative;" onclick="app.toggleNotificationsPanel(event)">
+              <div class="stat-number" id="notificationsCount">🔔 0</div>
+              <div class="stat-label">התראות</div>
+            </div>
+            <div class="stat-item" onclick="app.showPage('notebooks')">
               <div class="stat-number" id="activeNotebooks">6</div>
               <div class="stat-label">מחברות פעילות</div>
             </div>
-            <div class="stat-item">
-              <div class="stat-number" id="weekProgress">73%</div>
-              <div class="stat-label">התקדמות</div>
-            </div>
-            <div class="stat-item">
+            <div class="stat-item" onclick="app.showPage('calendar')">
               <div class="stat-number" id="nextClassTime">14:30</div>
               <div class="stat-label">השיעור הבא</div>
+            </div>
+            <div class="stat-item" onclick="app.showPage('tasks')">
+              <div class="stat-number" id="weekProgress">73%</div>
+              <div class="stat-label">התקדמות</div>
             </div>
           </div>
         </div>
@@ -6252,6 +6379,13 @@ this.drawing.init();
           this.startAutoSave(settings.autoSaveInterval);
         }
 this.showPage('homepage');
+        
+        // אתחול התראות Push בדפדפן
+        this.initPushNotifications();
+        
+        // בדיקת התראות כל דקה
+        setInterval(() => this.checkAndSendNotifications(), 60000);
+        
         console.log('✅ אפליקציה הופעלה בהצלחה!');
       },
       
@@ -6375,6 +6509,259 @@ this.showPage('homepage');
           const todayEvents = this.events.filter(event => event.date === today).length;
           calendarStatusElement.textContent = `${todayEvents} אירועים היום`;
         }
+
+        // עדכון התראות
+        this.updateNotifications();
+      },
+
+      // עדכון התראות
+      updateNotifications() {
+        const notifications = this.getUpcomingNotifications();
+        const countElement = document.getElementById('notificationsCount');
+        if (countElement) {
+          countElement.textContent = `🔔 ${notifications.length}`;
+        }
+        this.renderNotificationsList(notifications);
+      },
+
+      // קבלת התראות קרובות
+      getUpcomingNotifications() {
+        const notifications = [];
+        const now = new Date();
+        const in24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        const in12Hours = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+
+        // התראות על משימות
+        this.tasks.filter(task => !task.completed).forEach(task => {
+          const taskDateTime = new Date(task.dueDate + 'T' + (task.dueTime || '23:59'));
+          const timeDiff = taskDateTime - now;
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+          if (hoursDiff <= 0 && hoursDiff > -1) {
+            notifications.push({
+              type: 'urgent',
+              icon: '🚨',
+              title: task.title,
+              time: 'עכשיו!',
+              category: 'משימה'
+            });
+          } else if (hoursDiff > 0 && hoursDiff <= 12) {
+            notifications.push({
+              type: 'warning',
+              icon: '⏰',
+              title: task.title,
+              time: `בעוד ${Math.round(hoursDiff)} שעות`,
+              category: 'משימה'
+            });
+          } else if (hoursDiff > 12 && hoursDiff <= 24) {
+            notifications.push({
+              type: 'normal',
+              icon: '📋',
+              title: task.title,
+              time: `מחר ב-${task.dueTime || '23:59'}`,
+              category: 'משימה'
+            });
+          }
+        });
+
+        // התראות על אירועים
+        this.events.forEach(event => {
+          const eventDateTime = new Date(event.date + 'T' + event.startTime);
+          const timeDiff = eventDateTime - now;
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+          if (hoursDiff <= 0 && hoursDiff > -1) {
+            notifications.push({
+              type: 'urgent',
+              icon: '🔴',
+              title: event.title,
+              time: 'עכשיו!',
+              category: 'אירוע'
+            });
+          } else if (hoursDiff > 0 && hoursDiff <= 12) {
+            notifications.push({
+              type: 'warning',
+              icon: '📅',
+              title: event.title,
+              time: `בעוד ${Math.round(hoursDiff)} שעות`,
+              category: 'אירוע'
+            });
+          } else if (hoursDiff > 12 && hoursDiff <= 24) {
+            notifications.push({
+              type: 'normal',
+              icon: '📆',
+              title: event.title,
+              time: `מחר ב-${event.startTime}`,
+              category: 'אירוע'
+            });
+          }
+        });
+
+        // מיון לפי דחיפות
+        notifications.sort((a, b) => {
+          const priority = { urgent: 0, warning: 1, normal: 2 };
+          return priority[a.type] - priority[b.type];
+        });
+
+        return notifications;
+      },
+
+      // הצגת רשימת ההתראות
+      renderNotificationsList(notifications) {
+        const listElement = document.getElementById('notificationsList');
+        if (!listElement) return;
+
+        if (notifications.length === 0) {
+          listElement.innerHTML = '<div class="notification-empty">🎉 אין התראות קרובות</div>';
+          return;
+        }
+
+        listElement.innerHTML = notifications.map(notif => `
+          <div class="notification-item ${notif.type}">
+            <div class="notification-icon">${notif.icon}</div>
+            <div class="notification-content">
+              <div class="notification-title">${notif.title}</div>
+              <div class="notification-time">${notif.category} • ${notif.time}</div>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      // פתיחת/סגירת חלונית התראות
+      toggleNotificationsPanel(event) {
+        if (event) {
+          event.stopPropagation();
+        }
+        const panel = document.getElementById('notificationsPanel');
+        if (panel) {
+          panel.classList.toggle('show');
+          if (panel.classList.contains('show')) {
+            this.updateNotifications();
+          }
+        }
+      },
+
+      closeNotificationsPanel() {
+        const panel = document.getElementById('notificationsPanel');
+        if (panel) {
+          panel.classList.remove('show');
+        }
+      },
+
+      // אתחול התראות Push בדפדפן
+      async initPushNotifications() {
+        if (!('Notification' in window)) {
+          console.log('הדפדפן לא תומך בהתראות');
+          return;
+        }
+
+        if (Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          console.log('הרשאת התראות:', permission);
+        }
+      },
+
+      // שליחת התראת Push
+      sendPushNotification(title, body, icon = '🔔') {
+        if (Notification.permission !== 'granted') return;
+
+        const notification = new Notification(title, {
+          body: body,
+          icon: 'https://brickyeda.github.io/digitalbag/logo.png',
+          badge: 'https://brickyeda.github.io/digitalbag/logo.png',
+          tag: title, // מונע כפילויות
+          requireInteraction: true
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+      },
+
+      // מעקב אחרי התראות שכבר נשלחו
+      sentNotifications: new Set(),
+
+      // בדיקה ושליחת התראות
+      checkAndSendNotifications() {
+        const now = new Date();
+        
+        // בדיקת משימות
+        this.tasks.filter(task => !task.completed).forEach(task => {
+          const taskDateTime = new Date(task.dueDate + 'T' + (task.dueTime || '23:59'));
+          const timeDiff = taskDateTime - now;
+          const minutesDiff = timeDiff / (1000 * 60);
+
+          // התראה בזמן המשימה (0-1 דקות)
+          const nowKey = `task-now-${task.id}`;
+          if (minutesDiff >= -1 && minutesDiff <= 1 && !this.sentNotifications.has(nowKey)) {
+            this.sendPushNotification(
+              '⏰ משימה עכשיו!',
+              `${task.title} - הגיע הזמן!`
+            );
+            this.sentNotifications.add(nowKey);
+          }
+
+          // התראה 12 שעות לפני (720 דקות)
+          const h12Key = `task-12h-${task.id}`;
+          if (minutesDiff >= 719 && minutesDiff <= 721 && !this.sentNotifications.has(h12Key)) {
+            this.sendPushNotification(
+              '📋 תזכורת משימה',
+              `${task.title} - בעוד 12 שעות`
+            );
+            this.sentNotifications.add(h12Key);
+          }
+
+          // התראה 24 שעות לפני (1440 דקות)
+          const h24Key = `task-24h-${task.id}`;
+          if (minutesDiff >= 1439 && minutesDiff <= 1441 && !this.sentNotifications.has(h24Key)) {
+            this.sendPushNotification(
+              '📋 תזכורת משימה',
+              `${task.title} - מחר`
+            );
+            this.sentNotifications.add(h24Key);
+          }
+        });
+
+        // בדיקת אירועים
+        this.events.forEach(event => {
+          const eventDateTime = new Date(event.date + 'T' + event.startTime);
+          const timeDiff = eventDateTime - now;
+          const minutesDiff = timeDiff / (1000 * 60);
+
+          // התראה בזמן האירוע
+          const nowKey = `event-now-${event.id}`;
+          if (minutesDiff >= -1 && minutesDiff <= 1 && !this.sentNotifications.has(nowKey)) {
+            this.sendPushNotification(
+              '🔴 אירוע עכשיו!',
+              `${event.title} - ${event.location || ''}`
+            );
+            this.sentNotifications.add(nowKey);
+          }
+
+          // התראה 12 שעות לפני
+          const h12Key = `event-12h-${event.id}`;
+          if (minutesDiff >= 719 && minutesDiff <= 721 && !this.sentNotifications.has(h12Key)) {
+            this.sendPushNotification(
+              '📅 תזכורת אירוע',
+              `${event.title} - בעוד 12 שעות`
+            );
+            this.sentNotifications.add(h12Key);
+          }
+
+          // התראה 24 שעות לפני
+          const h24Key = `event-24h-${event.id}`;
+          if (minutesDiff >= 1439 && minutesDiff <= 1441 && !this.sentNotifications.has(h24Key)) {
+            this.sendPushNotification(
+              '📅 תזכורת אירוע',
+              `${event.title} - מחר`
+            );
+            this.sentNotifications.add(h24Key);
+          }
+        });
+
+        // עדכון התראות בממשק
+        this.updateNotifications();
       },
 
       // מעבר בין דפים
@@ -9885,6 +10272,12 @@ insertImage() {
         this.clearTaskForm();
         
         alert('המשימה נוצרה בהצלחה! 🎉');
+        
+        // שליחת התראה על משימה חדשה
+        this.sendPushNotification(
+          '✨ משימה חדשה נוספה',
+          `${newTask.title} - עד ${newTask.dueDate} בשעה ${newTask.dueTime}`
+        );
       },
 
       // ניקוי טופס משימה
@@ -10657,6 +11050,12 @@ const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth()
         this.closeEventModal();
         
         alert('האירוע נוצר בהצלחה! 🎉');
+        
+        // שליחת התראה על אירוע חדש
+        this.sendPushNotification(
+          '📅 אירוע חדש נוסף',
+          `${newEvent.title} - ${newEvent.date} בשעה ${newEvent.startTime}`
+        );
       },
 
       // יצירת אירועים חוזרים
@@ -13198,5 +13597,17 @@ calculateBitwise(first, second, operation) {
     });
 
   </script>
+
+<!-- חלונית התראות - מחוץ לכל האלמנטים -->
+<div class="notifications-panel" id="notificationsPanel">
+  <div class="notifications-header">
+    <span>🔔 התראות קרובות</span>
+    <button onclick="app.closeNotificationsPanel();">✕</button>
+  </div>
+  <div class="notifications-list" id="notificationsList">
+    <div class="notification-empty">אין התראות קרובות</div>
+  </div>
+</div>
+
 </body>
 </html>
