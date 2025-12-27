@@ -6987,7 +6987,7 @@ openNotebook(notebookKey) {
 // הצגה/הסתרה של סרגל המתמטיקה לפי סוג המחברת
   const mathToolbar = document.getElementById('mathFormulasToolbar');
   if (mathToolbar) {
-    if (notebook.pageType === 'grid' || notebook.pageType === 'blank') {
+    if (notebook.pageType === 'grid') {
       mathToolbar.style.display = 'flex';
     } else {
       mathToolbar.style.display = 'none';
