@@ -6351,13 +6351,16 @@ autoSaveInterval: null,
         this.loadUserData();
         this.updateTime();
         setInterval(() => this.updateTime(), 1000);
-        this.loadWelcomeData();
         await this.loadNotebookData();
         await this.loadTaskData();
         await this.loadCalendarData();
         this.renderNotebooks();
         this.renderTasks();
         this.updateTaskStats();
+        
+        // עדכון הנתונים בדף הבית אחרי טעינת כל המידע
+        this.loadWelcomeData();
+        this.updateNotifications();
         
 
 // אתחול כלי ציור
@@ -6655,9 +6658,46 @@ this.showPage('homepage');
           return;
         }
 
+        // הצג את הבאנר אם עדיין לא אושר
+        this.updateNotificationPermissionBanner();
+
         if (Notification.permission === 'default') {
+          // ננסה לבקש הרשאה אוטומטית
+          try {
+            const permission = await Notification.requestPermission();
+            console.log('הרשאת התראות:', permission);
+            this.updateNotificationPermissionBanner();
+          } catch (e) {
+            console.log('שגיאה בבקשת הרשאה:', e);
+          }
+        }
+      },
+
+      // עדכון באנר ההרשאה
+      updateNotificationPermissionBanner() {
+        const banner = document.getElementById('notificationPermissionBanner');
+        if (banner) {
+          if (Notification.permission === 'granted') {
+            banner.style.display = 'none';
+          } else {
+            banner.style.display = 'block';
+          }
+        }
+      },
+
+      // בקשת הרשאה ידנית
+      async requestNotificationPermission() {
+        try {
           const permission = await Notification.requestPermission();
           console.log('הרשאת התראות:', permission);
+          this.updateNotificationPermissionBanner();
+          
+          if (permission === 'granted') {
+            this.sendPushNotification('🎉 התראות אושרו!', 'תקבל תזכורות על משימות ואירועים');
+          }
+        } catch (e) {
+          console.log('שגיאה בבקשת הרשאה:', e);
+          alert('לא הצלחנו לבקש הרשאה. נסה דרך הגדרות הדפדפן.');
         }
       },
 
@@ -13603,6 +13643,10 @@ calculateBitwise(first, second, operation) {
   <div class="notifications-header">
     <span>🔔 התראות קרובות</span>
     <button onclick="app.closeNotificationsPanel();">✕</button>
+  </div>
+  <div id="notificationPermissionBanner" style="display: none; background: #fff3cd; padding: 10px 15px; text-align: center; border-bottom: 1px solid #ffc107;">
+    <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התראות כדי לקבל תזכורות</div>
+    <button onclick="app.requestNotificationPermission()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600;">אשר התראות</button>
   </div>
   <div class="notifications-list" id="notificationsList">
     <div class="notification-empty">אין התראות קרובות</div>
