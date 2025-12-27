@@ -2847,221 +2847,6 @@ background: rgba(24, 9, 236, 0.9);
 }
 
 
-/* Drawing Toolbar - Vertical Sidebar */
-/* כפתור צף להפעלת סרגל הציור */
-.drawing-toolbar-toggle {
-  position: relative;
-  display: inline-flex;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border: 3px solid white;
-  box-shadow: 0 4px 12px var(--shadow-medium);
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1.4rem;
-  margin-left: 15px;
-}
-
-.drawing-toolbar-toggle:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px var(--shadow-medium);
-}
-
-.drawing-toolbar {
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  border: 2px solid var(--border-color);
-  border-radius: 10px;
-  padding: 8px 20px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 15px;
-  box-shadow: 0 4px 12px var(--shadow-light);
-  position: fixed;
-  left: 310px;
-  top: 130px;
-  max-width: 850px;
-  height: 90px;
-  overflow: visible;
-  z-index: 1050;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-30px);
-  transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
-  pointer-events: none;
-}
-
-.drawing-toolbar.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
-  pointer-events: auto;
-}
-
-.drawing-toolbar:hover {
-  box-shadow: 0 8px 20px var(--shadow-medium);
-}
-
-.drawing-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: white;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
-  padding-right: 15px;
-  border-right: 2px solid rgba(255,255,255,0.3);
-  white-space: nowrap;
-}
-
-.drawing-title span {
-  font-size: 1.4rem;
-}
-
-.drawing-controls {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 15px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  width: auto;
-  flex: 1;
-}
-
-.drawing-section {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  padding: 0 15px;
-  border-right: 2px solid rgba(255,255,255,0.2);
-  height: 100%;
-  white-space: nowrap;
-}
-
-.drawing-section:first-of-type {
-  border-right: none;
-  padding-right: 0;
-}
-
-.drawing-section label {
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 600;
-  white-space: nowrap;
-  text-align: center;
-  margin-left: 5px;
-}
-
-.drawing-btn {
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  color: var(--text-primary);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-}
-
-.drawing-btn:hover {
-  background: #f8f9fa;
-  border-color: var(--primary-color);
-  transform: scale(1.1);
-}
-
-.drawing-btn.active {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.drawing-select {
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 8px 6px;
-  font-size: 0.7rem;
-  color: var(--text-primary);
-  cursor: pointer;
-  width: auto;
-  min-width: 80px;
-  text-align: center;
-  font-weight: 500;
-}
-
-.drawing-select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-}
-
-.drawing-color-picker {
-  width: 40px;
-  height: 40px;
-  border: 3px solid white;
-  border-radius: 8px;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-
-.drawing-slider {
-  width: 100px;
-  height: 6px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: rgba(255,255,255,0.3);
-  border-radius: 4px;
-  outline: none;
-}
-
-.drawing-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-
-.drawing-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-
-.thickness-display {
-  color: white;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-align: center;
-  background: rgba(255,255,255,0.2);
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Shape Options Dropdown - Adjusted for sidebar */
 /* Shape Options Dropdown */
 .shape-dropdown {
@@ -4975,85 +4760,6 @@ height: 100%;
 </div>
 
 <!-- Drawing Toolbar - Vertical Sidebar -->
-<div class="drawing-toolbar" id="drawingToolbar">
-  
-  <div class="drawing-title">
-    <span>🎨</span>
-    <div style="font-size: 0.8rem;">כלי ציור</div>
-  </div>
-
-  <!-- כפתור הפעלה/כיבוי -->
-  <button class="drawing-btn" id="drawingModeBtn" onclick="app.drawing.toggleDrawingMode()" style="width: auto; background: #27ae60; color: white; font-size: 0.7rem; padding: 8px 16px; height: 40px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
-    <span style="font-size: 1rem;">🎨</span>
-    <span id="drawingModeText">הפעל ציור</span>
-  </button>
-
-  
-  <div class="drawing-controls">
-    <!-- Tool Selection -->
-    <div class="drawing-section">
-      <label>כלי</label>
-      <button class="drawing-btn active" id="pencilBtn" onclick="app.drawing.selectTool('pencil')" title="עיפרון">
-        ✏️
-      </button>
-      <button class="drawing-btn" id="eraserBtn" onclick="app.drawing.selectTool('eraser')" title="מחק">
-        🧹
-      </button>
-      <div class="drawing-section">
-        <label>צורות</label>
-        <select class="drawing-select" id="shapeSelect" onchange="app.drawing.selectShape(this.value)">
-          <option value="">בחר צורה</option>
-          <option value="circle">⭕ עיגול</option>
-          <option value="square">⬜ ריבוע</option>
-          <option value="rectangle">▬ מלבן</option>
-          <option value="triangle">🔺 משולש</option>
-          <option value="line">➖ קו</option>
-          <option value="arrow">➡️ חץ</option>
-          <option value="star">⭐ כוכב</option>
-          <option value="heart">❤️ לב</option>
-          <option value="diamond">💎 מעויין</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Pencil Type -->
-    <div class="drawing-section">
-      <label>סוג</label>
-      <select class="drawing-select" id="pencilType" onchange="app.drawing.changePencilType(this.value)">
-        <option value="solid">רגיל</option>
-        <option value="marker">טוש</option>
-        <option value="chalk">גיר</option>
-        <option value="spray">ספריי</option>
-      </select>
-    </div>
-
-    <!-- Color Selection -->
-    <div class="drawing-section">
-      <label>צבע</label>
-      <input type="color" class="drawing-color-picker" id="drawingColor" value="#000000" onchange="app.drawing.changeColor(this.value)">
-    </div>
-
-    <!-- Thickness -->
-    <div class="drawing-section">
-      <label>עובי</label>
-      <span class="thickness-display" id="thicknessDisplay">3</span>
-      <input type="range" class="drawing-slider" id="thicknessSlider" min="1" max="20" value="3" oninput="app.drawing.changeThickness(this.value)">
-    </div>
-
-    <!-- Undo/Redo -->
-    <div class="drawing-section">
-      <label>פעולות</label>
-<button class="drawing-btn" onclick="document.querySelectorAll('.page-canvas.drawing-active').forEach(c => { if(c._undo) c._undo(); })" title="ביטול">
-  ↶
-</button>
-<button class="drawing-btn" onclick="if(confirm('למחוק הכל?')) { document.querySelectorAll('.page-canvas').forEach(c => c.getContext('2d').clearRect(0,0,c.width,c.height)); }" title="נקה הכל"
- style="background: #e74c3c; color: white; border-color: #e74c3c;">
-  🗑️
-</button>
-    </div>
-  </div>
-</div>
-
       <!-- Formatting Toolbar - בתוך הדף עצמו -->
 <div class="global-formatting-toolbar" id="inPageToolbar" style="position: sticky !important; top: 80px !important; z-index: 999 !important; background: #f8f9fa !important; margin-bottom: 20px;">
         <!-- Font Group -->
@@ -5071,11 +4777,11 @@ height: 100%;
           <select class="toolbar-select" id="inPageFontSize" onchange="app.changeGlobalFontSize(this.value)">
             <option value="12">12px</option>
             <option value="14">14px</option>
-            <option value="16" selected>16px</option>
+            <option value="16">16px</option>
             <option value="18">18px</option>
             <option value="20">20px</option>
             <option value="24">24px</option>
-            <option value="28">28px</option>
+            <option value="28" selected>28px</option>
             <option value="32">32px</option>
           </select>
         </div>
@@ -5153,10 +4859,6 @@ height: 100%;
           <button class="toolbar-btn" onclick="app.insertGlobalList('numbered')" title="רשימה ממוספרת">
             1. 2. 3.
           </button>
-        </div>
-
-        <!-- Insert Group -->
-        <div class="toolbar-group">
           <button class="toolbar-btn" onclick="app.insertGlobalSymbol('★')" title="הוסף כוכב">
             ★
           </button>
@@ -5168,25 +4870,44 @@ height: 100%;
           </button>
         </div>
 
-        <!-- Tools Group -->
-        <div class="toolbar-group">
-          <button class="toolbar-btn" onclick="app.clearGlobalFormatting()" title="נקה עיצוב">
+        <!-- Drawing Tools Group -->
+        <div class="toolbar-group" style="display: flex; align-items: center; gap: 8px;">
+          <button class="toolbar-btn" id="drawingModeBtn" onclick="app.drawing.toggleDrawingMode()" title="הפעל/כבה ציור" style="background: #27ae60; color: white;">
+            🎨 <span id="drawingModeText" style="font-size: 0.7rem;">ציור</span>
+          </button>
+          <button class="toolbar-btn" id="pencilBtn" onclick="app.drawing.selectTool('pencil')" title="עיפרון">
+            ✏️
+          </button>
+          <button class="toolbar-btn" id="eraserBtn" onclick="app.drawing.selectTool('eraser')" title="מחק">
             🧹
           </button>
-          <button class="toolbar-btn" onclick="app.toggleGlobalWordWrap()" title="גלישת מילים">
-            🔄
+          <select class="toolbar-select" id="shapeSelect" onchange="app.drawing.selectShape(this.value)" style="width: auto;">
+            <option value="">צורות</option>
+            <option value="circle">⭕ עיגול</option>
+            <option value="square">⬜ ריבוע</option>
+            <option value="rectangle">▬ מלבן</option>
+            <option value="triangle">🔺 משולש</option>
+            <option value="line">➖ קו</option>
+            <option value="arrow">➡️ חץ</option>
+            <option value="star">⭐ כוכב</option>
+            <option value="heart">❤️ לב</option>
+            <option value="diamond">💎 מעויין</option>
+          </select>
+          <select class="toolbar-select" id="pencilType" onchange="app.drawing.changePencilType(this.value)" style="width: auto;">
+            <option value="solid">רגיל</option>
+            <option value="marker">טוש</option>
+            <option value="chalk">גיר</option>
+            <option value="spray">ספריי</option>
+          </select>
+          <input type="color" id="drawingColor" value="#000000" onchange="app.drawing.changeColor(this.value)" title="צבע ציור" style="width: 32px; height: 32px; border: none; cursor: pointer; border-radius: 4px;">
+          <span id="thicknessDisplay" style="font-size: 0.8rem; min-width: 20px; text-align: center;">3</span>
+          <input type="range" id="thicknessSlider" min="1" max="20" value="3" oninput="app.drawing.changeThickness(this.value)" title="עובי" style="width: 80px;">
+          <button class="toolbar-btn" onclick="document.querySelectorAll('.page-canvas.drawing-active').forEach(c => { if(c._undo) c._undo(); })" title="ביטול">
+            ↶
           </button>
-        </div>
-
-        <!-- Current Page Indicator -->
-        <div class="toolbar-group" style="display: flex; align-items: center; gap: 10px;">
-          <span id="inPageIndicator" style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 500;">
-ציור
-          </span>
-          <!-- כפתור צף לסרגל כלי ציור -->
-          <div class="drawing-toolbar-toggle" id="drawingToolbarToggle" onclick="app.drawing.enableDrawingMode()">
-            🎨
-          </div>
+          <button class="toolbar-btn" onclick="if(confirm('למחוק הכל?')) { document.querySelectorAll('.page-canvas').forEach(c => c.getContext('2d').clearRect(0,0,c.width,c.height)); }" title="נקה הכל" style="background: #e74c3c; color: white;">
+            🗑️
+          </button>
         </div>
       </div>
 
@@ -7093,7 +6814,7 @@ style="position: sticky !important;"
   ondrop="app.dropFormula(event, ${index})"
   ondragover="app.allowDrop(event)"
   onkeydown="app.handleTextareaKeydown(event, ${index})"
-  style="font-family: Arial; font-size: 16px; text-align: right;"
+  style="font-family: Arial; font-size: 28px; text-align: right;"
 >${pageData.content || ''}</textarea>
           </div>
         `;
@@ -8165,7 +7886,7 @@ applyColor(type, color) {
           textarea.style.backgroundColor = '';
           textarea.style.textAlign = 'right';
           textarea.style.fontFamily = 'Arial';
-          textarea.style.fontSize = '16px';
+          textarea.style.fontSize = '28px';
           
           // איפוס כפתורי הסרגל
           document.querySelectorAll('.toolbar-btn.active').forEach(btn => {
@@ -11653,9 +11374,10 @@ saveState();
  
   const getMousePos = (e) => {
     const rect = canvas.getBoundingClientRect();
+    const zoom = 0.85; // התאמה לזום של הדף
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: (e.clientX - rect.left) / zoom,
+      y: (e.clientY - rect.top) / zoom
     };
   };
  
@@ -13446,43 +13168,6 @@ calculateBitwise(first, second, operation) {
     document.addEventListener('DOMContentLoaded', function() {
       stickyNotes.init();
       timerApp.init();
-      
-      // ניהול סרגל כלי הציור
-      const toggle = document.getElementById('drawingToolbarToggle');
-      const toolbar = document.getElementById('drawingToolbar');
-      let isToolbarOpen = false;
-      let closeTimeout;
-
-      // פתיחת הסרגל בריחוף על הכפתור
-      toggle.addEventListener('mouseenter', function() {
-        clearTimeout(closeTimeout);
-        toolbar.classList.add('show');
-        isToolbarOpen = true;
-      });
-
-      // שמירה על הסרגל פתוח כשהעכבר עובר לתוכו
-      toolbar.addEventListener('mouseenter', function() {
-        clearTimeout(closeTimeout);
-        isToolbarOpen = true;
-      });
-
-      // סגירת הסרגל כשהעכבר יוצא מהכפתור
-      toggle.addEventListener('mouseleave', function() {
-        closeTimeout = setTimeout(function() {
-          if (isToolbarOpen) {
-            toolbar.classList.remove('show');
-            isToolbarOpen = false;
-          }
-        }, 300);
-      });
-
-      // סגירת הסרגל כשהעכבר יוצא ממנו
-      toolbar.addEventListener('mouseleave', function() {
-        closeTimeout = setTimeout(function() {
-          toolbar.classList.remove('show');
-          isToolbarOpen = false;
-        }, 300);
-      });
     });
 
   </script>
