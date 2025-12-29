@@ -13655,34 +13655,52 @@ calculateBitwise(first, second, operation) {
       timerComplete() {
         this.resetTimer();
 
-        alert('⏰ הזמן נגמר!\n\nהטיימר הושלם בהצלחה! 🎉');
+        // צליל התראה חזק - מתנגן לפני ההודעה
+        this.playAlarmSound();
 
         if ('vibrate' in navigator) {
-          navigator.vibrate([300, 100, 300, 100, 300]);
+          navigator.vibrate([300, 100, 300, 100, 300, 100, 300]);
         }
 
+        // הודעה אחרי הצליל
+        setTimeout(() => {
+          alert('⏰ הזמן נגמר!\n\nהטיימר הושלם בהצלחה! 🎉');
+        }, 500);
+      },
+
+      // פונקציית צליל התראה חזקה
+      playAlarmSound() {
         try {
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          const oscillator = audioContext.createOscillator();
-          const gainNode = audioContext.createGain();
           
-          oscillator.connect(gainNode);
-          gainNode.connect(audioContext.destination);
+          // יצירת 5 ביפים רצופים
+          const beepCount = 5;
+          const beepDuration = 0.15;
+          const beepGap = 0.1;
           
-          oscillator.frequency.value = 800;
-          oscillator.type = 'sine';
-          
-          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-          
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.5);
+          for (let i = 0; i < beepCount; i++) {
+            const startTime = audioContext.currentTime + i * (beepDuration + beepGap);
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // צליל גבוה וחזק יותר
+            oscillator.frequency.value = i % 2 === 0 ? 880 : 660;
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0.5, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + beepDuration);
+            
+            oscillator.start(startTime);
+            oscillator.stop(startTime + beepDuration);
+          }
         } catch (e) {
           console.log('Audio not supported');
         }
       }
-    };
-
     // אתחול דפי ממו
     document.addEventListener('DOMContentLoaded', function() {
       stickyNotes.init();
