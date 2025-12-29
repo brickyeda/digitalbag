@@ -13655,7 +13655,7 @@ calculateBitwise(first, second, operation) {
 timerComplete() {
         this.resetTimer();
 
-        // צליל התראה חזק
+        // צליל התראה חזק קודם
         try {
           const audioContext = new (window.AudioContext || window.webkitAudioContext)();
           
@@ -13672,7 +13672,6 @@ timerComplete() {
             osc.stop(time + 0.15);
           };
           
-          // 5 ביפים
           const now = audioContext.currentTime;
           playBeep(now, 880);
           playBeep(now + 0.25, 660);
@@ -13688,10 +13687,12 @@ timerComplete() {
           navigator.vibrate([300, 100, 300, 100, 300]);
         }
 
-        setTimeout(() => {
+        // ההודעה קופצת רק אחרי 1.5 שניות - אחרי שהצליל מסתיים
+        setTimeout(function() {
           alert('⏰ הזמן נגמר!\n\nהטיימר הושלם בהצלחה! 🎉');
-        }, 1200);
+        }, 1500);
       }
+      
     // אתחול דפי ממו
     document.addEventListener('DOMContentLoaded', function() {
       stickyNotes.init();
