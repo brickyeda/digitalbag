@@ -4729,8 +4729,8 @@ height: 100%;
         <div class="welcome-content">
           <div class="welcome-text">
             <h1 id="welcomeGreeting">שלום!</h1>
-            <div class="subtitle" id="welcomeSubtitle">הילקוט הדיגיטלי שלך</div>
-            <div class="institution" id="welcomeInstitution">לומדים בהצלחה</div>
+            <div class="subtitle" id="welcomeSubtitle">מיקוד שמוביל להצלחה</div>
+            <div class="institution" id="welcomeInstitution">הילקוט החכם שלך</div>
             <button onclick="logout()" style="margin-top: 15px; padding: 10px 20px; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 8px; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s;">
               🚪 התנתק
             </button>
@@ -11580,7 +11580,7 @@ updateSidebarEventsList() {
         // עדכון כיתוב משנה
         const subtitleElement = document.getElementById('welcomeSubtitle');
         if (loggedIn && settings.userName) {
-          subtitleElement.textContent = 'ברוך הבא לתיק הדיגיטלי שלך';
+          subtitleElement.textContent = 'מיקוד שמוביל להצלחה';
         } else {
           subtitleElement.textContent = 'הילקוט הדיגיטלי שלך';
         }
@@ -11590,7 +11590,7 @@ updateSidebarEventsList() {
         if (loggedIn && settings.userSchool) {
           institutionElement.textContent = settings.userSchool;
         } else {
-          institutionElement.textContent = 'לומדים יחד בהצלחה';
+          institutionElement.textContent = 'הילקוט החכם שלך';
         }
       },
 
