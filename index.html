@@ -4729,8 +4729,8 @@ height: 100%;
         <div class="welcome-content">
           <div class="welcome-text">
             <h1 id="welcomeGreeting">שלום!</h1>
-            <div class="subtitle" id="welcomeSubtitle">מיקוד שמוביל להצלחה</div>
-            <div class="institution" id="welcomeInstitution">הילקוט החכם שלך</div>
+<div class="subtitle" id="welcomeSubtitle">מיקוד שמוביל להצלחה</div>
+            <div class="institution" id="welcomeInstitution">הילקוד החכם שלך</div>
             <button onclick="logout()" style="margin-top: 15px; padding: 10px 20px; background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: none; border-radius: 8px; font-size: 0.95rem; cursor: pointer; transition: transform 0.2s;">
               🚪 התנתק
             </button>
@@ -11580,9 +11580,9 @@ updateSidebarEventsList() {
         // עדכון כיתוב משנה
         const subtitleElement = document.getElementById('welcomeSubtitle');
         if (loggedIn && settings.userName) {
-          subtitleElement.textContent = 'מיקוד שמוביל להצלחה';
+subtitleElement.textContent = 'מיקוד שמוביל להצלחה';
         } else {
-          subtitleElement.textContent = 'מיקוד שמוביל להצלחה';
+          subtitleElement.textContent = 'הילקוט החכם שלך';
         }
         
         // עדכון מוסד לימוד
@@ -11590,7 +11590,7 @@ updateSidebarEventsList() {
         if (loggedIn && settings.userSchool) {
           institutionElement.textContent = settings.userSchool;
         } else {
-          institutionElement.textContent = 'הילקוט החכם שלך';
+          institutionElement.textContent = 'לומדים יחד בהצלחה';
         }
       },
 
@@ -13652,46 +13652,37 @@ calculateBitwise(first, second, operation) {
         document.getElementById('timerCircle').style.strokeDashoffset = offset;
       },
 
-timerComplete() {
+      timerComplete() {
         this.resetTimer();
 
-        // צליל התראה חזק
-        try {
-          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          
-          const playBeep = (time, freq) => {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            osc.frequency.value = freq;
-            osc.type = 'square';
-            gain.gain.setValueAtTime(0.5, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
-            osc.start(time);
-            osc.stop(time + 0.15);
-          };
-          
-          // 5 ביפים
-          const now = audioContext.currentTime;
-          playBeep(now, 880);
-          playBeep(now + 0.25, 660);
-          playBeep(now + 0.5, 880);
-          playBeep(now + 0.75, 660);
-          playBeep(now + 1.0, 880);
-          
-        } catch (e) {
-          console.log('Audio not supported');
-        }
+        alert('⏰ הזמן נגמר!\n\nהטיימר הושלם בהצלחה! 🎉');
 
         if ('vibrate' in navigator) {
           navigator.vibrate([300, 100, 300, 100, 300]);
         }
 
-        setTimeout(() => {
-          alert('⏰ הזמן נגמר!\n\nהטיימר הושלם בהצלחה! 🎉');
-        }, 1200);
+        try {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.value = 800;
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.5);
+        } catch (e) {
+          console.log('Audio not supported');
+        }
       }
+    };
+
     // אתחול דפי ממו
     document.addEventListener('DOMContentLoaded', function() {
       stickyNotes.init();
