@@ -8811,8 +8811,30 @@ async exportNotebookToPDF() {
     
     pdf.setFontSize(12);
     
-    // פונקציה להפיכת טקסט עברי
-    const reverseHebrew = (str) => str.split('').reverse().join('');
+    // פונקציה להפיכת טקסט עברי בלבד (שומרת על אנגלית ומספרים)
+    const processLineForPDF = (str) => {
+      // בדיקה אם השורה מכילה עברית
+      const hasHebrew = /[\u0590-\u05FF]/.test(str);
+      
+      if (!hasHebrew) {
+        // אנגלית בלבד - לא להפוך
+        return str;
+      }
+      
+      // פיצול לחלקים - עברית, אנגלית, מספרים וסימנים
+      const parts = str.match(/[\u0590-\u05FF]+|[a-zA-Z0-9]+|[^a-zA-Z0-9\u0590-\u05FF]+/g) || [str];
+      
+      // הפוך את הסדר הכללי ואת החלקים העבריים
+      const processedParts = parts.reverse().map(part => {
+        if (/[\u0590-\u05FF]/.test(part)) {
+          // חלק עברי - להפוך את האותיות
+          return part.split('').reverse().join('');
+        }
+        return part; // אנגלית/מספרים - לא להפוך
+      });
+      
+      return processedParts.join('');
+    };
     
     // קבלת הדפים לייצוא
     const notebookContent = document.getElementById('notebookContent');
@@ -8864,8 +8886,8 @@ async exportNotebookToPDF() {
         for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
           const line = textLines[currentLine];
           if (line && line.trim()) {
-            const reversedLine = reverseHebrew(line);
-            pdf.text(reversedLine, pageWidth - marginRight, y, { align: 'right' });
+            const processedLine = processLineForPDF(line);
+            pdf.text(processedLine, pageWidth - marginRight, y, { align: 'right' });
           }
           y += lineHeight;
           currentLine++;
