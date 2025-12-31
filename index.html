@@ -15,7 +15,7 @@
   
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Campus - הילקוט החכם שלך</title>
+  <title>My Campus - ילקוט דיגיטלי חכם</title>
   
   <!-- Meta Tags לשיתוף ברשתות חברתיות -->
   <meta name="description" content="My Campus - הילקוט הדיגיטלי החכם שלך. מחברות, משימות, יומן ועוד - הכל במקום אחד!">
@@ -8782,63 +8782,98 @@ async exportNotebookToPDF() {
   document.body.appendChild(loadingMessage);
   
   try {
-    if (typeof html2canvas === 'undefined') {
-      await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    }
+    // טעינת jsPDF
     if (typeof jspdf === 'undefined') {
       await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
     }
     
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     
+    // טעינת גופן עברי
+    try {
+      const response = await fetch('https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4i1UA.ttf');
+      const arrayBuffer = await response.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      pdf.addFileToVFS('Rubik.ttf', btoa(binary));
+      pdf.addFont('Rubik.ttf', 'Rubik', 'normal');
+      pdf.setFont('Rubik');
+    } catch(e) {
+      console.error('שגיאה בטעינת גופן:', e);
+    }
+    
+    // הגדרות עמוד
+    const pageWidth = 210, pageHeight = 297;
+    const marginRight = 25, marginLeft = 20, marginTop = 30, lineHeight = 8;
+    const linesPerPage = Math.floor((pageHeight - marginTop - 20) / lineHeight);
+    
+    pdf.setFontSize(12);
+    
+    // פונקציה להפיכת טקסט עברי
+    const reverseHebrew = (str) => str.split('').reverse().join('');
+    
+    // קבלת הדפים לייצוא
     const notebookContent = document.getElementById('notebookContent');
     const pagesToExport = notebookContent.querySelectorAll('.export-this-page');
-    const pages = pagesToExport.length > 0 ? pagesToExport : notebookContent.querySelectorAll('.lined-page, .grid-page, .blank-page');
+    const pageElements = pagesToExport.length > 0 ? pagesToExport : notebookContent.querySelectorAll('.lined-page, .grid-page, .blank-page');
     
-    if (pages.length === 0) {
+    if (pageElements.length === 0) {
       alert('אין דפים לייצוא');
       document.body.removeChild(loadingMessage);
       return;
     }
     
-    const elementsToHide = document.querySelectorAll('.page-delete-btn, .page-title-edit');
-    elementsToHide.forEach(el => el.style.display = 'none');
+    let isFirstPdfPage = true;
     
-    let isFirstPage = true;
-    
-    for (let i = 0; i < pages.length; i++) {
-      const page = pages[i];
+    // עבור על כל דף במחברת
+    for (let pageIdx = 0; pageIdx < pageElements.length; pageIdx++) {
+      const pageEl = pageElements[pageIdx];
+      const textarea = pageEl.querySelector('textarea');
+      if (!textarea) continue;
       
-      const canvas = await html2canvas(page, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#fefef8',
-        logging: false,
-        width: page.scrollWidth,
-        height: page.scrollHeight
-      });
+      const text = textarea.value || '';
+      if (!text.trim()) continue;
       
-      const imgData = canvas.toDataURL('image/png');
+      const textLines = text.split('\n');
+      let currentLine = 0;
       
-      if (!isFirstPage) {
-        pdf.addPage();
+      while (currentLine < textLines.length) {
+        if (!isFirstPdfPage) {
+          pdf.addPage();
+        }
+        isFirstPdfPage = false;
+        
+        // ציור קווי מחברת
+        pdf.setDrawColor(210, 225, 240);
+        pdf.setLineWidth(0.2);
+        for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
+          pdf.line(15, y, pageWidth - 15, y);
+        }
+        
+        // קו שוליים אדום
+        pdf.setDrawColor(255, 107, 107);
+        pdf.setLineWidth(0.4);
+        pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
+        
+        // כתיבת הטקסט
+        pdf.setTextColor(44, 62, 80);
+        let y = marginTop;
+        
+        for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
+          const line = textLines[currentLine];
+          if (line && line.trim()) {
+            const reversedLine = reverseHebrew(line);
+            pdf.text(reversedLine, pageWidth - marginRight, y, { align: 'right' });
+          }
+          y += lineHeight;
+          currentLine++;
+        }
       }
-      isFirstPage = false;
-      
-      const imgWidth = 190;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
     }
     
-    elementsToHide.forEach(el => el.style.display = '');
-    
+    // שמירת הקובץ
     const firstPage = notebook.pages && notebook.pages.length > 0 ? notebook.pages[0] : null;
     const pageTitle = firstPage && firstPage.title ? firstPage.title : 'ללא כותרת';
     const pageDate = firstPage && firstPage.date ? firstPage.date : '';
@@ -11582,7 +11617,7 @@ updateSidebarEventsList() {
         if (loggedIn && settings.userName) {
 subtitleElement.textContent = 'מיקוד שמוביל להצלחה';
         } else {
-          subtitleElement.textContent = 'מיקוד שמוביל להצלחה';
+          subtitleElement.textContent = 'הילקוט החכם שלך';
         }
         
         // עדכון מוסד לימוד
@@ -11590,7 +11625,7 @@ subtitleElement.textContent = 'מיקוד שמוביל להצלחה';
         if (loggedIn && settings.userSchool) {
           institutionElement.textContent = settings.userSchool;
         } else {
-          institutionElement.textContent = 'הילקוט החכם שלך';
+          institutionElement.textContent = 'לומדים יחד בהצלחה';
         }
       },
 
