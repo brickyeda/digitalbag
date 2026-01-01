@@ -8886,8 +8886,17 @@ async exportNotebookToPDF() {
         for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
           const line = textLines[currentLine];
           if (line && line.trim()) {
+            // בדיקה אם השורה מכילה עברית
+            const hasHebrew = /[\u0590-\u05FF]/.test(line);
             const processedLine = processLineForPDF(line);
-            pdf.text(processedLine, pageWidth - marginRight, y, { align: 'right' });
+            
+            if (hasHebrew) {
+              // עברית או מעורב - יישור לימין
+              pdf.text(processedLine, pageWidth - marginRight, y, { align: 'right' });
+            } else {
+              // אנגלית בלבד - יישור לשמאל
+              pdf.text(processedLine, marginLeft, y, { align: 'left' });
+            }
           }
           y += lineHeight;
           currentLine++;
