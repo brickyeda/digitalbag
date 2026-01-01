@@ -8821,19 +8821,31 @@ async exportNotebookToPDF() {
         return str;
       }
       
-      // פיצול לחלקים - עברית, אנגלית, מספרים וסימנים
-      const parts = str.match(/[\u0590-\u05FF]+|[a-zA-Z0-9]+|[^a-zA-Z0-9\u0590-\u05FF]+/g) || [str];
+      // בדיקה אם זו שורה מעורבת (עברית + אנגלית)
+      const hasEnglish = /[a-zA-Z]/.test(str);
       
-      // הפוך את הסדר הכללי ואת החלקים העבריים
-      const processedParts = parts.reverse().map(part => {
-        if (/[\u0590-\u05FF]/.test(part)) {
-          // חלק עברי - להפוך את האותיות
-          return part.split('').reverse().join('');
+      if (!hasEnglish) {
+        // עברית בלבד - פשוט להפוך הכל
+        return str.split('').reverse().join('');
+      }
+      
+      // שורה מעורבת - מפצלים למילים ומטפלים בכל מילה
+      // הופכים כל מילה עברית, משאירים אנגלית כמו שהיא
+      // ואז הופכים את סדר כל המילים
+      
+      const tokens = str.match(/[\u0590-\u05FF]+|[a-zA-Z0-9²³±√]+|[^\u0590-\u05FFa-zA-Z0-9²³±√\s]+|\s+/g) || [str];
+      
+      const processedTokens = tokens.map(token => {
+        if (/[\u0590-\u05FF]/.test(token)) {
+          // מילה עברית - להפוך
+          return token.split('').reverse().join('');
         }
-        return part; // אנגלית/מספרים - לא להפוך
+        // אנגלית/מספרים/סימנים - לא להפוך
+        return token;
       });
       
-      return processedParts.join('');
+      // הפוך את סדר כל הטוקנים
+      return processedTokens.reverse().join('');
     };
     
     // קבלת הדפים לייצוא
