@@ -8813,39 +8813,30 @@ async exportNotebookToPDF() {
     
     // פונקציה להפיכת טקסט עברי בלבד (שומרת על אנגלית ומספרים)
     const processLineForPDF = (str) => {
-      // בדיקה אם השורה מכילה עברית
       const hasHebrew = /[\u0590-\u05FF]/.test(str);
+      if (!hasHebrew) return { text: str, isRTL: false };
       
-      if (!hasHebrew) {
-        // אנגלית בלבד - לא להפוך
-        return str;
-      }
-      
-      // בדיקה אם זו שורה מעורבת (עברית + אנגלית)
       const hasEnglish = /[a-zA-Z]/.test(str);
-      
       if (!hasEnglish) {
-        // עברית בלבד - פשוט להפוך הכל
-        return str.split('').reverse().join('');
+        // עברית בלבד - להפוך
+        return { text: str.split('').reverse().join(''), isRTL: true };
       }
       
-      // שורה מעורבת - מפצלים למילים ומטפלים בכל מילה
-      // הופכים כל מילה עברית, משאירים אנגלית כמו שהיא
-      // ואז הופכים את סדר כל המילים
+      // שורה מעורבת
+      const parts = str.match(/[\u0590-\u05FF]+|\s+|[^\u0590-\u05FF\s]+/g);
       
-      const tokens = str.match(/[\u0590-\u05FF]+|[a-zA-Z0-9²³±√]+|[^\u0590-\u05FFa-zA-Z0-9²³±√\s]+|\s+/g) || [str];
-      
-      const processedTokens = tokens.map(token => {
-        if (/[\u0590-\u05FF]/.test(token)) {
-          // מילה עברית - להפוך
-          return token.split('').reverse().join('');
+      let hebrewEnd = 0;
+      for (let i = 0; i < parts.length; i++) {
+        if (/[a-zA-Z0-9]/.test(parts[i])) {
+          hebrewEnd = i;
+          break;
         }
-        // אנגלית/מספרים/סימנים - לא להפוך
-        return token;
-      });
+      }
       
-      // הפוך את סדר כל הטוקנים
-      return processedTokens.reverse().join('');
+      const hebrewPart = parts.slice(0, hebrewEnd).join('');
+      const englishPart = parts.slice(hebrewEnd).join('');
+      
+      return { text: englishPart + hebrewPart, isRTL: true };
     };
     
     // קבלת הדפים לייצוא
@@ -8898,16 +8889,11 @@ async exportNotebookToPDF() {
         for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
           const line = textLines[currentLine];
           if (line && line.trim()) {
-            // בדיקה אם השורה מכילה עברית
-            const hasHebrew = /[\u0590-\u05FF]/.test(line);
-            const processedLine = processLineForPDF(line);
-            
-            if (hasHebrew) {
-              // עברית או מעורב - יישור לימין
-              pdf.text(processedLine, pageWidth - marginRight, y, { align: 'right' });
+            const result = processLineForPDF(line);
+            if (result.isRTL) {
+              pdf.text(result.text, pageWidth - marginRight, y, { align: 'right' });
             } else {
-              // אנגלית בלבד - יישור לשמאל
-              pdf.text(processedLine, marginLeft, y, { align: 'left' });
+              pdf.text(result.text, marginLeft, y, { align: 'left' });
             }
           }
           y += lineHeight;
