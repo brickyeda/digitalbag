@@ -5148,6 +5148,101 @@ height: 100%;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
+/* ========== Auto Logout Warning ========== */
+.auto-logout-warning {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.auto-logout-warning.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.auto-logout-content {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+  animation: warningPulse 2s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.auto-logout-icon {
+  font-size: 4rem;
+  margin-bottom: 15px;
+  animation: iconBounce 1s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.auto-logout-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.auto-logout-message {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+.auto-logout-countdown {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--danger-color);
+  margin: 20px 0;
+  font-family: 'Courier New', monospace;
+}
+
+.auto-logout-note {
+  font-size: 0.85rem;
+  color: var(--success-color);
+  margin-bottom: 20px;
+}
+
+.auto-logout-btn {
+  background: linear-gradient(135deg, var(--success-color), #219a52);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  width: 100%;
+}
+
+.auto-logout-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4);
+}
+
   </style>
 </head>
 <body>
@@ -6703,6 +6798,21 @@ height: 100%;
     </div>
   </div>
 
+  <!-- Auto Logout Warning -->
+  <div class="auto-logout-warning" id="autoLogoutWarning">
+    <div class="auto-logout-content">
+      <div class="auto-logout-icon">⏰</div>
+      <h3 class="auto-logout-title">האם אתה עדיין כאן?</h3>
+      <p class="auto-logout-message">לא זוהתה פעילות במערכת זמן רב.</p>
+      <p class="auto-logout-message">המערכת תתנתק אוטומטית בעוד:</p>
+      <div class="auto-logout-countdown" id="logoutCountdown">5:00</div>
+      <p class="auto-logout-note">הנתונים שלך יישמרו אוטומטית</p>
+      <button class="auto-logout-btn" onclick="autoLogout.stayLoggedIn()">
+        ✋ אני כאן - המשך עבודה
+      </button>
+    </div>
+  </div>
+
   <!-- Sticky Notes FAB and Menu -->
   <div class="sticky-notes-fab" id="stickyNotesFab" onclick="stickyNotes.toggleMenu()" title="דפי ממו">
     📝
@@ -6745,6 +6855,117 @@ height: 100%;
         closeAboutModal();
       }
     });
+
+    // ========== Auto Logout System ==========
+    const autoLogout = {
+      inactivityTime: 30 * 60 * 1000, // 30 דקות
+      warningTime: 5 * 60 * 1000, // 5 דקות אזהרה
+      inactivityTimer: null,
+      warningTimer: null,
+      warningShown: false,
+
+      init() {
+        this.resetTimer();
+        this.setupEventListeners();
+        console.log('✅ מערכת Auto Logout הופעלה');
+      },
+
+      setupEventListeners() {
+        // אירועים שמעידים על פעילות
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => {
+          document.addEventListener(event, () => this.onActivity(), { passive: true });
+        });
+      },
+
+      onActivity() {
+        // אם ההתראה מוצגת וזוהתה פעילות - בטל את ההתנתקות
+        if (this.warningShown) {
+          this.hideWarning();
+          console.log('✅ זוהתה פעילות - ביטול התנתקות אוטומטית');
+        }
+        this.resetTimer();
+      },
+
+      resetTimer() {
+        // נקה טיימרים קיימים
+        if (this.inactivityTimer) clearTimeout(this.inactivityTimer);
+        if (this.warningTimer) clearTimeout(this.warningTimer);
+        this.warningShown = false;
+
+        // התחל טיימר חדש - אחרי 30 דקות תציג אזהרה
+        this.inactivityTimer = setTimeout(() => {
+          this.showWarning();
+        }, this.inactivityTime);
+      },
+
+      showWarning() {
+        this.warningShown = true;
+        document.getElementById('autoLogoutWarning').classList.add('active');
+        this.startCountdown();
+
+        // אחרי 5 דקות נוספות - התנתק
+        this.warningTimer = setTimeout(() => {
+          this.performAutoLogout();
+        }, this.warningTime);
+      },
+
+      hideWarning() {
+        this.warningShown = false;
+        document.getElementById('autoLogoutWarning').classList.remove('active');
+        if (this.warningTimer) clearTimeout(this.warningTimer);
+        if (this.countdownInterval) clearInterval(this.countdownInterval);
+      },
+
+      startCountdown() {
+        let seconds = 300; // 5 דקות
+        const countdownEl = document.getElementById('logoutCountdown');
+        
+        this.countdownInterval = setInterval(() => {
+          seconds--;
+          const mins = Math.floor(seconds / 60);
+          const secs = seconds % 60;
+          countdownEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+          
+          if (seconds <= 0) {
+            clearInterval(this.countdownInterval);
+          }
+        }, 1000);
+      },
+
+      async performAutoLogout() {
+        try {
+          // שמור את כל הנתונים לפני התנתקות
+          console.log('💾 שומר נתונים לפני התנתקות אוטומטית...');
+          
+          if (typeof app !== 'undefined') {
+            if (app.tasks) await saveToSupabase('task_data', app.tasks);
+            if (app.events) await saveToSupabase('calendar_data', app.events);
+            if (app.subjects) await saveToSupabase('notebook_data', app.subjects);
+          }
+          if (typeof scheduleApp !== 'undefined' && scheduleApp.schedule) {
+            await saveToSupabase('weekly_schedule', scheduleApp.schedule);
+          }
+
+          console.log('✅ נתונים נשמרו - מתנתק...');
+
+          // התנתק
+          await supabaseClient.auth.signOut();
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          window.location.replace('login_FIXED_NOW.html?t=' + Date.now() + '&reason=timeout');
+        } catch (error) {
+          console.error('שגיאה בהתנתקות אוטומטית:', error);
+          window.location.replace('login_FIXED_NOW.html?t=' + Date.now());
+        }
+      },
+
+      stayLoggedIn() {
+        this.hideWarning();
+        this.resetTimer();
+      }
+    };
 
     // ========== הגדרות Supabase ==========
     const SUPABASE_URL = 'https://ditiequwboxbiqrzvfhr.supabase.co';
@@ -13777,6 +13998,13 @@ calculateBitwise(first, second, operation) {
     // הפעלת האפליקציה כשהדף נטען
     document.addEventListener('DOMContentLoaded', function() {
       app.init();
+      
+      // הפעלת מערכת Auto Logout
+      setTimeout(() => {
+        if (currentUser) {
+          autoLogout.init();
+        }
+      }, 2000);
       
       // אירועי מודל עריכת משימה
       document.getElementById('taskEditModal').addEventListener('click', function(e) {
