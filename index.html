@@ -4966,6 +4966,188 @@ height: 100%;
   }
 }
 
+/* ========== Footer Styles ========== */
+.app-footer {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  padding: 20px;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+  margin-top: 40px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.footer-copyright {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.footer-about-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer-about-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* About Modal */
+.about-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.about-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.about-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.3);
+  transform: scale(0.9) translateY(20px);
+  transition: transform 0.3s ease;
+  text-align: center;
+}
+
+.about-modal-overlay.active .about-modal {
+  transform: scale(1) translateY(0);
+}
+
+.about-logo {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 15px;
+  animation: gentle-bounce 3s ease-in-out infinite;
+}
+
+.about-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.about-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-bottom: 20px;
+}
+
+.about-version {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  margin-bottom: 25px;
+}
+
+.about-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+  margin: 20px 0;
+}
+
+.about-developer {
+  margin-bottom: 20px;
+}
+
+.about-developer-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.about-developer-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.about-contact {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+}
+
+.about-contact-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.about-contact-email {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.about-contact-email a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+}
+
+.about-contact-email a:hover {
+  color: var(--secondary-color);
+}
+
+.about-close-btn {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.about-close-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
   </style>
 </head>
 <body>
@@ -5115,6 +5297,17 @@ height: 100%;
           <span class="tool-status">בפיתוח</span>
         </div>
       </div>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <div class="footer-content">
+          <span class="footer-copyright">© 2026 My Campus | פותח ע"י שחר ברגיג</span>
+          <button class="footer-about-btn" onclick="openAboutModal()">
+            <span>ℹ️</span>
+            אודות
+          </button>
+        </div>
+      </footer>
     </div>
 
     <!-- Notebooks Page -->
@@ -6484,6 +6677,32 @@ height: 100%;
   </div>
 
 
+  <!-- About Modal -->
+  <div class="about-modal-overlay" id="aboutModal" onclick="closeAboutModal(event)">
+    <div class="about-modal" onclick="event.stopPropagation()">
+      <img src="https://brickyeda.github.io/digitalbag/logo.png" alt="My Campus Logo" class="about-logo">
+      <h2 class="about-title">My Campus</h2>
+      <p class="about-subtitle">הילקוט הדיגיטלי החכם שלך</p>
+      <span class="about-version">גרסה 1.0</span>
+      
+      <div class="about-divider"></div>
+      
+      <div class="about-developer">
+        <div class="about-developer-label">פותח ע"י</div>
+        <div class="about-developer-name">שחר ברגיג</div>
+      </div>
+      
+      <div class="about-contact">
+        <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
+        <div class="about-contact-email">
+          <a href="mailto:BRICKYEDA@GMAIL.COM">BRICKYEDA@GMAIL.COM</a>
+        </div>
+      </div>
+      
+      <button class="about-close-btn" onclick="closeAboutModal()">סגור</button>
+    </div>
+  </div>
+
   <!-- Sticky Notes FAB and Menu -->
   <div class="sticky-notes-fab" id="stickyNotesFab" onclick="stickyNotes.toggleMenu()" title="דפי ממו">
     📝
@@ -6509,6 +6728,24 @@ height: 100%;
   </div>
 
   <script>
+    // ========== About Modal Functions ==========
+    function openAboutModal() {
+      document.getElementById('aboutModal').classList.add('active');
+    }
+    
+    function closeAboutModal(event) {
+      if (!event || event.target === event.currentTarget) {
+        document.getElementById('aboutModal').classList.remove('active');
+      }
+    }
+    
+    // סגירה עם Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeAboutModal();
+      }
+    });
+
     // ========== הגדרות Supabase ==========
     const SUPABASE_URL = 'https://ditiequwboxbiqrzvfhr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpdGllcXV3Ym94Ymlxcnp2ZmhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NDQ4NDUsImV4cCI6MjA4MTQyMDg0NX0.HM6FhOilvJJnLpooweEQjuXmdUBEZ9jc-59jIS_be_k';
