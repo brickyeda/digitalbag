@@ -7552,8 +7552,10 @@ if (this.currentNotebook && pageId !== 'notebookView') {
         } else if (pageId === 'homepage') {
           this.loadWelcomeData();
         } else if (pageId === 'schedule') {
-          scheduleApp.renderTable();
-          scheduleApp.updateStats();
+          scheduleApp.loadSchedule().then(() => {
+            scheduleApp.renderTable();
+            scheduleApp.updateStats();
+          });
         } else if (pageId === 'notebookView') {
           this.renderNotebookContent();
 } else if (pageId === 'notebooks') {
@@ -14409,8 +14411,8 @@ calculateBitwise(first, second, operation) {
       days: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
       dayNames: ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'],
 
-      init() {
-        this.loadSchedule();
+      async init() {
+        await this.loadSchedule();
         this.renderTable();
         this.updateStats();
       },
