@@ -5983,6 +5983,247 @@ height: 100%;
 </div>
 <!-- End of Calculator Page -->
 
+    <!-- Timer Page -->
+    <div id="timer" class="page">
+      <div class="timer-container">
+        <!-- Header -->
+        <div class="timer-header">
+          <h1>⏱️ טיימר ושעון עצר</h1>
+          <p>מעקב זמן מדויק ומקצועי</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="timer-tabs">
+          <button class="timer-tab active" onclick="timerApp.switchTab('stopwatch')">
+            🏃 שעון עצר
+          </button>
+          <button class="timer-tab" onclick="timerApp.switchTab('timer')">
+            ⏲️ טיימר
+          </button>
+        </div>
+
+        <!-- Content -->
+        <div class="timer-content">
+          <!-- Stopwatch -->
+          <div class="timer-tab-content active" id="stopwatchContent">
+            <div class="timer-display">
+              <!-- Visual Indicator -->
+              <div class="timer-visual-indicator">
+                <svg class="timer-circle-progress" viewBox="0 0 200 200">
+                  <circle class="timer-circle-bg" cx="100" cy="100" r="90"></circle>
+                  <circle class="timer-circle-fg" cx="100" cy="100" r="90" id="stopwatchCircle"></circle>
+                </svg>
+                <div class="timer-pulse" id="stopwatchPulse"></div>
+              </div>
+
+              <div class="timer-time" id="stopwatchTime">00:00:00<span style="font-size: 0.6em; opacity: 0.8;">.0</span></div>
+              
+              <div class="timer-controls">
+                <button class="timer-btn timer-btn-start" id="stopwatchStart" onclick="timerApp.startStopwatch()">
+                  <span>▶️</span>
+                  <span>התחל</span>
+                </button>
+                <button class="timer-btn timer-btn-pause" id="stopwatchPause" onclick="timerApp.pauseStopwatch()" style="display: none;">
+                  <span>⏸️</span>
+                  <span>השהה</span>
+                </button>
+                <button class="timer-btn timer-btn-secondary" onclick="timerApp.recordLap()">
+                  <span>🏁</span>
+                  <span>סיבוב</span>
+                </button>
+                <button class="timer-btn timer-btn-danger" onclick="timerApp.resetStopwatch()">
+                  <span>🔄</span>
+                  <span>אפס</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Laps -->
+            <div class="timer-laps-container" id="lapsContainer" style="display: none;">
+              <div class="timer-laps-header">
+                <span>🏁 סיבובים</span>
+                <span class="timer-laps-count" id="lapsCount">0</span>
+              </div>
+              <div class="timer-laps-list" id="lapsList">
+                <div class="timer-empty-state">
+                  <div class="timer-empty-icon">🏁</div>
+                  <div class="timer-empty-text">לא נרשמו סיבובים עדיין</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timer -->
+          <div class="timer-tab-content" id="timerContent">
+            <div class="timer-display">
+              <!-- Timer Presets -->
+              <div class="timer-presets">
+                <button class="timer-preset" onclick="timerApp.setPreset(1, 0)">1 דקה</button>
+                <button class="timer-preset" onclick="timerApp.setPreset(5, 0)">5 דקות</button>
+                <button class="timer-preset" onclick="timerApp.setPreset(10, 0)">10 דקות</button>
+                <button class="timer-preset" onclick="timerApp.setPreset(15, 0)">15 דקות</button>
+                <button class="timer-preset" onclick="timerApp.setPreset(25, 0)">25 דקות</button>
+                <button class="timer-preset" onclick="timerApp.setPreset(30, 0)">30 דקות</button>
+                <button class="timer-preset" onclick="timerApp.setPreset(45, 0)">45 דקות</button>
+                <button class="timer-preset" onclick="timerApp.focusOnInput()">⌨️ הזנה ידנית</button>
+              </div>
+
+              <!-- Timer Input -->
+              <div class="timer-input-section">
+                <div class="timer-input-group">
+                  <input type="number" id="timerHours" value="0" min="0" max="23">
+                  <label>שעות</label>
+                </div>
+                <span class="timer-input-separator">:</span>
+                <div class="timer-input-group">
+                  <input type="number" id="timerMinutes" value="0" min="0" max="59">
+                  <label>דקות</label>
+                </div>
+                <span class="timer-input-separator">:</span>
+                <div class="timer-input-group">
+                  <input type="number" id="timerSeconds" value="0" min="0" max="59">
+                  <label>שניות</label>
+                </div>
+              </div>
+
+              <!-- Visual Indicator -->
+              <div class="timer-visual-indicator">
+                <svg class="timer-circle-progress" viewBox="0 0 200 200">
+                  <circle class="timer-circle-bg" cx="100" cy="100" r="90"></circle>
+                  <circle class="timer-circle-fg timer" cx="100" cy="100" r="90" id="timerCircle"></circle>
+                </svg>
+                <div class="timer-pulse" id="timerPulse"></div>
+              </div>
+
+              <div class="timer-time" id="timerTime">00:00:00</div>
+              
+              <div class="timer-controls">
+                <button class="timer-btn timer-btn-start" id="timerStart" onclick="timerApp.startTimer()">
+                  <span>▶️</span>
+                  <span>התחל</span>
+                </button>
+                <button class="timer-btn timer-btn-pause" id="timerPause" onclick="timerApp.pauseTimer()" style="display: none;">
+                  <span>⏸️</span>
+                  <span>השהה</span>
+                </button>
+                <button class="timer-btn timer-btn-danger" onclick="timerApp.resetTimer()">
+                  <span>🔄</span>
+                  <span>אפס</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Schedule Page -->
+    <div id="schedule" class="page">
+      <div class="page-header">
+        <h1 class="page-title">
+          <span>🗓️</span>
+          מערכת שעות שבועית
+        </h1>
+        <button class="back-btn" onclick="app.showPage('homepage')">
+          <span>←</span>
+          חזור לדף הבית
+        </button>
+      </div>
+
+      <!-- Schedule Stats -->
+      <div class="schedule-stats">
+        <div class="schedule-stat">
+          <div class="schedule-stat-number" id="totalLessons">0</div>
+          <div class="schedule-stat-label">שיעורים בשבוע</div>
+        </div>
+        <div class="schedule-stat">
+          <div class="schedule-stat-number" id="todayLessons">0</div>
+          <div class="schedule-stat-label">שיעורים היום</div>
+        </div>
+        <div class="schedule-stat">
+          <div class="schedule-stat-number" id="uniqueSubjects">0</div>
+          <div class="schedule-stat-label">מקצועות</div>
+        </div>
+      </div>
+
+      <!-- Schedule Actions -->
+      <div class="schedule-actions">
+        <button class="schedule-action-btn primary" onclick="scheduleApp.syncToCalendar()">
+          <span>🔄</span>
+          סנכרן ליומן
+        </button>
+        <button class="schedule-action-btn danger" onclick="scheduleApp.clearAll()">
+          <span>🗑️</span>
+          נקה הכל
+        </button>
+      </div>
+
+      <!-- Schedule Table -->
+      <div class="schedule-container">
+        <table class="schedule-table" id="scheduleTable">
+          <thead>
+            <tr>
+              <th>שעה</th>
+              <th>ראשון</th>
+              <th>שני</th>
+              <th>שלישי</th>
+              <th>רביעי</th>
+              <th>חמישי</th>
+              <th>שישי</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody">
+            <!-- Will be generated by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  <!-- Schedule Edit Modal -->
+  <div class="schedule-modal-overlay" id="scheduleModal">
+    <div class="schedule-modal">
+      <h3>📚 <span id="scheduleModalTitle">הוסף שיעור</span></h3>
+      
+      <div class="schedule-form-group">
+        <label>שם המקצוע:</label>
+        <input type="text" id="lessonSubject" placeholder="לדוגמה: מתמטיקה" list="subjectsList">
+        <datalist id="subjectsList">
+          <option value="מתמטיקה">
+          <option value="אנגלית">
+          <option value="עברית">
+          <option value="היסטוריה">
+          <option value="תנ״ך">
+          <option value="פיזיקה">
+          <option value="כימיה">
+          <option value="ביולוגיה">
+          <option value="ספרות">
+          <option value="אזרחות">
+          <option value="גיאוגרפיה">
+          <option value="מדעי המחשב">
+          <option value="חינוך גופני">
+          <option value="אמנות">
+          <option value="מוזיקה">
+        </datalist>
+      </div>
+      
+      <div class="schedule-form-group">
+        <label>חדר/כיתה:</label>
+        <input type="text" id="lessonRoom" placeholder="לדוגמה: כיתה 12">
+      </div>
+      
+      <div class="schedule-form-group">
+        <label>מורה (אופציונלי):</label>
+        <input type="text" id="lessonTeacher" placeholder="לדוגמה: גב' כהן">
+      </div>
+      
+      <div class="schedule-modal-buttons">
+        <button class="schedule-btn-save" onclick="scheduleApp.saveLesson()">💾 שמור</button>
+        <button class="schedule-btn-delete" id="deleteLessonBtn" onclick="scheduleApp.deleteLesson()" style="display: none;">🗑️ מחק</button>
+        <button class="schedule-btn-cancel" onclick="scheduleApp.closeModal()">ביטול</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 <!-- End of Page Container -->
 
@@ -6242,274 +6483,6 @@ height: 100%;
     </div>
   </div>
 
-  <!-- Timer Page -->
-  <div id="timer" class="page">
-    <div class="timer-container">
-      <!-- Header -->
-      <div class="timer-header">
-        <h1>⏱️ טיימר ושעון עצר</h1>
-        <p>מעקב זמן מדויק ומקצועי</p>
-      </div>
-
-      <!-- Tabs -->
-      <div class="timer-tabs">
-        <button class="timer-tab active" onclick="timerApp.switchTab('stopwatch')">
-          🏃 שעון עצר
-        </button>
-        <button class="timer-tab" onclick="timerApp.switchTab('timer')">
-          ⏲️ טיימר
-        </button>
-      </div>
-
-      <!-- Content -->
-      <div class="timer-content">
-        <!-- Stopwatch -->
-        <div class="timer-tab-content active" id="stopwatchContent">
-          <div class="timer-display">
-            <!-- Visual Indicator -->
-            <div class="timer-visual-indicator">
-              <svg class="timer-circle-progress" viewBox="0 0 200 200">
-                <defs>
-                  <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
-                  </linearGradient>
-                </defs>
-                <circle class="timer-circle-bg" cx="100" cy="100" r="90"/>
-                <circle class="timer-circle-fill" id="stopwatchCircle" cx="100" cy="100" r="90"
-                        stroke-dasharray="565.48" stroke-dashoffset="565.48"/>
-              </svg>
-              <div class="timer-pulse-ring" id="stopwatchPulse"></div>
-              <div class="timer-center-icon" id="stopwatchIcon">⏱️</div>
-            </div>
-
-            <div class="timer-time" id="stopwatchTime">00:00:00<span style="font-size: 0.6em; opacity: 0.8;">.0</span></div>
-            <div class="timer-time-label">שעון עצר</div>
-          </div>
-
-          <div class="timer-controls">
-            <button class="timer-btn timer-btn-primary" id="stopwatchStart" onclick="timerApp.startStopwatch()">
-              <span>▶️</span>
-              <span>התחל</span>
-            </button>
-            <button class="timer-btn timer-btn-warning" id="stopwatchPause" onclick="timerApp.pauseStopwatch()" style="display: none;">
-              <span>⏸️</span>
-              <span>השהה</span>
-            </button>
-            <button class="timer-btn timer-btn-secondary" id="stopwatchLap" onclick="timerApp.recordLap()" disabled>
-              <span>🏁</span>
-              <span>סיבוב</span>
-            </button>
-            <button class="timer-btn timer-btn-danger" onclick="timerApp.resetStopwatch()">
-              <span>🔄</span>
-              <span>אפס</span>
-            </button>
-          </div>
-
-          <div class="timer-laps" id="lapsContainer" style="display: none;">
-            <div class="timer-laps-header">
-              <div class="timer-laps-title">
-                <span>🏁</span>
-                <span>סיבובים</span>
-              </div>
-              <div class="timer-laps-count" id="lapsCount">0</div>
-            </div>
-            <div id="lapsList" style="flex: 1; overflow-y: auto;"></div>
-          </div>
-        </div>
-
-        <!-- Timer -->
-        <div class="timer-tab-content" id="timerContent">
-          <div class="timer-layout">
-            <div class="timer-presets">
-              <div class="timer-preset" onclick="timerApp.setPreset(1, 0)">
-                <div class="timer-preset-icon">⚡</div>
-                <div class="timer-preset-name">דקה אחת</div>
-                <div class="timer-preset-time">60 שניות</div>
-              </div>
-              <div class="timer-preset" onclick="timerApp.setPreset(5, 0)">
-                <div class="timer-preset-icon">☕</div>
-                <div class="timer-preset-name">הפסקה</div>
-                <div class="timer-preset-time">5 דקות</div>
-              </div>
-              <div class="timer-preset" onclick="timerApp.setPreset(15, 0)">
-                <div class="timer-preset-icon">📚</div>
-                <div class="timer-preset-name">למידה קצרה</div>
-                <div class="timer-preset-time">15 דקות</div>
-              </div>
-              <div class="timer-preset" onclick="timerApp.setPreset(30, 0)">
-                <div class="timer-preset-icon">🍅</div>
-                <div class="timer-preset-name">חצי</div>
-                <div class="timer-preset-time">30 דקות</div>
-              </div>
-              <div class="timer-preset custom" onclick="timerApp.focusOnInput()">
-                <div class="timer-preset-icon">⚙️</div>
-                <div class="timer-preset-name">הזמן שלך</div>
-                <div class="timer-preset-time">הגדר ידנית</div>
-              </div>
-            </div>
-
-            <div class="timer-main">
-              <div class="timer-display">
-                <!-- Visual Indicator -->
-                <div class="timer-visual-indicator">
-                  <svg class="timer-circle-progress" viewBox="0 0 200 200">
-                    <circle class="timer-circle-bg" cx="100" cy="100" r="90"/>
-                    <circle class="timer-circle-fill" id="timerCircle" cx="100" cy="100" r="90"
-                            stroke-dasharray="565.48" stroke-dashoffset="0"/>
-                  </svg>
-                  <div class="timer-pulse-ring" id="timerPulse"></div>
-                  <div class="timer-center-icon" id="timerIcon">⏲️</div>
-                </div>
-
-                <div class="timer-time" id="timerTime">00:00:00</div>
-                <div class="timer-time-label">טיימר</div>
-              </div>
-
-              <div style="display: flex; flex-direction: column; gap: 20px;">
-                <div class="timer-input-section">
-                  <div class="timer-input-group">
-                    <div class="timer-input-label">שעות</div>
-                    <input type="number" class="timer-time-input" id="timerHours" min="0" max="23" value="0">
-                  </div>
-                  <div class="timer-input-group">
-                    <div class="timer-input-label">דקות</div>
-                    <input type="number" class="timer-time-input" id="timerMinutes" min="0" max="59" value="0">
-                  </div>
-                  <div class="timer-input-group">
-                    <div class="timer-input-label">שניות</div>
-                    <input type="number" class="timer-time-input" id="timerSeconds" min="0" max="59" value="0">
-                  </div>
-                </div>
-
-                <div class="timer-controls">
-                  <button class="timer-btn timer-btn-primary" id="timerStart" onclick="timerApp.startTimer()">
-                    <span>▶️</span>
-                    <span>התחל</span>
-                  </button>
-                  <button class="timer-btn timer-btn-warning" id="timerPause" onclick="timerApp.pauseTimer()" style="display: none;">
-                    <span>⏸️</span>
-                    <span>השהה</span>
-                  </button>
-                  <button class="timer-btn timer-btn-danger" onclick="timerApp.resetTimer()">
-                    <span>🔄</span>
-                    <span>אפס</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Weekly Schedule Page -->
-  <div id="schedule" class="page">
-    <div class="page-header">
-      <h1 class="page-title">
-        <span>🗓️</span>
-        מערכת שעות שבועית
-      </h1>
-      <button class="back-btn" onclick="app.showPage('homepage')">
-        <span>←</span>
-        חזור לדף הבית
-      </button>
-    </div>
-
-    <!-- Schedule Stats -->
-    <div class="schedule-stats">
-      <div class="schedule-stat">
-        <div class="schedule-stat-number" id="totalLessons">0</div>
-        <div class="schedule-stat-label">שיעורים בשבוע</div>
-      </div>
-      <div class="schedule-stat">
-        <div class="schedule-stat-number" id="todayLessons">0</div>
-        <div class="schedule-stat-label">שיעורים היום</div>
-      </div>
-      <div class="schedule-stat">
-        <div class="schedule-stat-number" id="uniqueSubjects">0</div>
-        <div class="schedule-stat-label">מקצועות</div>
-      </div>
-    </div>
-
-    <!-- Schedule Actions -->
-    <div class="schedule-actions">
-      <button class="schedule-action-btn primary" onclick="scheduleApp.syncToCalendar()">
-        <span>🔄</span>
-        סנכרן ליומן
-      </button>
-      <button class="schedule-action-btn danger" onclick="scheduleApp.clearAll()">
-        <span>🗑️</span>
-        נקה הכל
-      </button>
-    </div>
-
-    <!-- Schedule Table -->
-    <div class="schedule-container">
-      <table class="schedule-table" id="scheduleTable">
-        <thead>
-          <tr>
-            <th>שעה</th>
-            <th>ראשון</th>
-            <th>שני</th>
-            <th>שלישי</th>
-            <th>רביעי</th>
-            <th>חמישי</th>
-            <th>שישי</th>
-          </tr>
-        </thead>
-        <tbody id="scheduleBody">
-          <!-- Will be generated by JavaScript -->
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Schedule Edit Modal -->
-  <div class="schedule-modal-overlay" id="scheduleModal">
-    <div class="schedule-modal">
-      <h3>📚 <span id="scheduleModalTitle">הוסף שיעור</span></h3>
-      
-      <div class="schedule-form-group">
-        <label>שם המקצוע:</label>
-        <input type="text" id="lessonSubject" placeholder="לדוגמה: מתמטיקה" list="subjectsList">
-        <datalist id="subjectsList">
-          <option value="מתמטיקה">
-          <option value="אנגלית">
-          <option value="עברית">
-          <option value="היסטוריה">
-          <option value="תנ״ך">
-          <option value="פיזיקה">
-          <option value="כימיה">
-          <option value="ביולוגיה">
-          <option value="ספרות">
-          <option value="אזרחות">
-          <option value="גיאוגרפיה">
-          <option value="מדעי המחשב">
-          <option value="חינוך גופני">
-          <option value="אמנות">
-          <option value="מוזיקה">
-        </datalist>
-      </div>
-      
-      <div class="schedule-form-group">
-        <label>חדר/כיתה:</label>
-        <input type="text" id="lessonRoom" placeholder="לדוגמה: כיתה 12">
-      </div>
-      
-      <div class="schedule-form-group">
-        <label>מורה (אופציונלי):</label>
-        <input type="text" id="lessonTeacher" placeholder="לדוגמה: גב' כהן">
-      </div>
-      
-      <div class="schedule-modal-buttons">
-        <button class="schedule-btn-save" onclick="scheduleApp.saveLesson()">💾 שמור</button>
-        <button class="schedule-btn-delete" id="deleteLessonBtn" onclick="scheduleApp.deleteLesson()" style="display: none;">🗑️ מחק</button>
-        <button class="schedule-btn-cancel" onclick="scheduleApp.closeModal()">ביטול</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Sticky Notes FAB and Menu -->
   <div class="sticky-notes-fab" id="stickyNotesFab" onclick="stickyNotes.toggleMenu()" title="דפי ממו">
