@@ -4753,8 +4753,8 @@ height: 100%;
               <div class="stat-label">השיעור הבא</div>
             </div>
             <div class="stat-item" onclick="app.showPage('tasks')">
-              <div class="stat-number" id="weekProgress">73%</div>
-              <div class="stat-label">התקדמות</div>
+              <div class="stat-number" id="openTasksCount">0</div>
+              <div class="stat-label">משימות פתוחות</div>
             </div>
           </div>
         </div>
@@ -6549,9 +6549,15 @@ this.showPage('homepage');
 
         // עדכון סטטוס משימות בדף הבית
         const taskStatusElement = document.getElementById('taskStatusHome');
+        const pendingCount = this.tasks.filter(task => !task.completed).length;
         if (taskStatusElement) {
-          const pendingCount = this.tasks.filter(task => !task.completed).length;
           taskStatusElement.textContent = `${pendingCount} משימות פתוחות`;
+        }
+
+        // עדכון ריבוע משימות פתוחות
+        const openTasksElement = document.getElementById('openTasksCount');
+        if (openTasksElement) {
+          openTasksElement.textContent = pendingCount;
         }
 
         // עדכון סטטוס לוח השנה בדף הבית
