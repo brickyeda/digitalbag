@@ -15381,16 +15381,24 @@ calculateBitwise(first, second, operation) {
       // טעינת קישורים
       async loadLinks() {
         try {
-          if (app.currentUser && app.supabase) {
-            const { data, error } = await app.supabase
+          if (currentUser && supabaseClient) {
+            const { data, error } = await supabaseClient
               .from('user_data')
               .select('data')
-              .eq('user_id', app.currentUser.id)
+              .eq('user_id', currentUser.id)
               .eq('data_type', 'links')
               .maybeSingle();
             
             if (data && data.data) {
               this.links = data.data;
+            } else {
+              // אם אין נתונים ב-Supabase, נסה localStorage
+              const saved = localStorage.getItem('myLinks');
+              if (saved) {
+                this.links = JSON.parse(saved);
+                // שמור ל-Supabase את הנתונים המקומיים
+                await this.saveLinks();
+              }
             }
           } else {
             const saved = localStorage.getItem('myLinks');
@@ -15412,28 +15420,29 @@ calculateBitwise(first, second, operation) {
         try {
           localStorage.setItem('myLinks', JSON.stringify(this.links));
           
-          if (app.currentUser && app.supabase) {
-            const { data: existing } = await app.supabase
+          if (currentUser && supabaseClient) {
+            const { data: existing } = await supabaseClient
               .from('user_data')
               .select('id')
-              .eq('user_id', app.currentUser.id)
+              .eq('user_id', currentUser.id)
               .eq('data_type', 'links')
               .maybeSingle();
 
             if (existing) {
-              await app.supabase
+              await supabaseClient
                 .from('user_data')
                 .update({ data: this.links, updated_at: new Date().toISOString() })
                 .eq('id', existing.id);
             } else {
-              await app.supabase
+              await supabaseClient
                 .from('user_data')
                 .insert({
-                  user_id: app.currentUser.id,
+                  user_id: currentUser.id,
                   data_type: 'links',
                   data: this.links
                 });
             }
+            console.log('✅ קישורים נשמרו ב-Supabase');
           }
         } catch (e) {
           console.error('Error saving links:', e);
