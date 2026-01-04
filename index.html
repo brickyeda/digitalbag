@@ -3070,6 +3070,141 @@ background: rgba(24, 9, 236, 0.9);
   border-color: var(--primary-color);
 }
 
+/* Editable Shape Styling */
+.editable-shape {
+  position: absolute;
+  cursor: move;
+  user-select: none;
+  z-index: 50;
+}
+
+.editable-shape:hover {
+  outline: 2px dashed rgba(102, 126, 234, 0.5);
+}
+
+.editable-shape.selected {
+  outline: 2px solid var(--primary-color);
+}
+
+.editable-shape svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Shape Controls */
+.shape-controls {
+  position: absolute;
+  top: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 5px 8px;
+  display: none;
+  gap: 5px;
+  box-shadow: 0 4px 12px var(--shadow-light);
+  z-index: 100;
+  white-space: nowrap;
+}
+
+.editable-shape.selected .shape-controls {
+  display: flex;
+}
+
+.shape-control-btn {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.shape-control-btn:hover {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.shape-control-btn.danger:hover {
+  background: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+/* Shape Resize Handles */
+.shape-resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--primary-color);
+  border: 2px solid white;
+  border-radius: 50%;
+  display: none;
+  z-index: 60;
+}
+
+.editable-shape.selected .shape-resize-handle {
+  display: block;
+}
+
+.shape-resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+.shape-resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+.shape-resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+.shape-resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+/* Shape Rotation Handle */
+.shape-rotate-handle {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  background: var(--accent-color);
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: grab;
+  display: none;
+  z-index: 60;
+  font-size: 10px;
+  color: white;
+  text-align: center;
+  line-height: 16px;
+}
+
+.shape-rotate-handle:active {
+  cursor: grabbing;
+}
+
+.editable-shape.selected .shape-rotate-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Rotation Line */
+.shape-rotation-line {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  width: 1px;
+  height: 20px;
+  background: var(--accent-color);
+  display: none;
+}
+
+.editable-shape.selected .shape-rotation-line {
+  display: block;
+}
+
 /* Interactive Image Styling */
 .interactive-image-container {
   position: absolute;
@@ -6020,6 +6155,9 @@ height: 100%;
           <button class="toolbar-btn" id="eraserBtn" onclick="app.drawing.selectTool('eraser')" title="מחק">
             🧹
           </button>
+          <button class="toolbar-btn" id="selectBtn" onclick="app.drawing.selectTool('select')" title="בחירת צורה">
+            👆
+          </button>
           <select class="toolbar-select" id="shapeSelect" onchange="app.drawing.selectShape(this.value)" style="width: auto;">
             <option value="">צורות</option>
             <option value="circle">⭕ עיגול</option>
@@ -8311,6 +8449,15 @@ openNotebook(notebookKey) {
   
   // רינדור תוכן המחברת
   this.renderNotebookContent();
+  
+  // טעינת צורות כשפותחים מחברת
+  setTimeout(() => {
+    // נקה צורות קודמות מהדום
+    document.querySelectorAll('.editable-shape').forEach(el => el.remove());
+    // טען את הצורות של המחברת הנוכחית
+    this.drawing.loadShapesFromStorage();
+    this.drawing.renderAllShapes();
+  }, 200);
   
   // המרה אוטומטית של דפים עם תוכן HTML
   setTimeout(() => {
@@ -13142,8 +13289,37 @@ drawing: {
   tempCanvas: null,
 
 init() {
-  // אתחול כלי ציור - ריק כרגע
+  // אתחול כלי ציור
   console.log('🎨 כלי ציור מוכנים');
+  
+  // אתחול מערכת צורות ניתנות לעריכה
+  this.initDragHandlers();
+  this.loadShapesFromStorage();
+  
+  // לחיצה מחוץ לצורות - ביטול בחירה
+  document.addEventListener('click', (e) => {
+    if (this.currentTool === 'select' && !e.target.closest('.editable-shape')) {
+      this.deselectAllShapes();
+    }
+  });
+  
+  // מקשי קיצור
+  document.addEventListener('keydown', (e) => {
+    if (this.selectedShape) {
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        // מניעת מחיקה אם המיקוד הוא על שדה טקסט
+        if (!e.target.matches('input, textarea, [contenteditable]')) {
+          e.preventDefault();
+          this.deleteShape(this.selectedShape);
+        }
+      } else if (e.key === 'Escape') {
+        this.deselectAllShapes();
+      } else if (e.key === 'd' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        this.duplicateShape(this.selectedShape);
+      }
+    }
+  });
 },
 
 toggleDrawingMode() {
@@ -13343,11 +13519,42 @@ canvas._undo = () => {
     }
   };
   
-canvas.onmouseup = () => {
+canvas.onmouseup = (e) => {
   if (isDrawing) {
+    const pos = getMousePos(e);
+    
+    // אם זה צורה - צור צורה ניתנת לעריכה במקום לצייר על הcanvas
+    if (this.currentTool === 'shape' && tempCanvas) {
+      // שחזר את המצב הקודם (בלי הצורה הזמנית)
+      ctx.putImageData(tempCanvas, 0, 0);
+      
+      // צור צורה ניתנת לעריכה
+      const width = pos.x - startX;
+      const height = pos.y - startY;
+      
+      // רק אם הצורה מספיק גדולה
+      if (Math.abs(width) > 10 || Math.abs(height) > 10) {
+        this.createEditableShape(
+          this.currentShape,
+          startX,
+          startY,
+          width,
+          height,
+          this.currentColor,
+          this.fillShape,
+          this.currentThickness
+        );
+        this.saveShapesToStorage();
+        
+        // עבור לכלי בחירה אוטומטית
+        this.selectTool('select');
+        this.selectShape(this.editableShapes[this.editableShapes.length - 1].id);
+      }
+    }
+    
     isDrawing = false;
     ctx.beginPath();
-    saveState(); // שמירה אחרי כל ציור
+    saveState();
   }
 };
   
@@ -13489,11 +13696,32 @@ drawShapeOnCanvas(ctx, startX, startY, x, y) {
 
   selectTool(tool) {
     this.currentTool = tool;
-    document.querySelectorAll('.drawing-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.drawing-btn, .toolbar-btn').forEach(btn => {
+      if (btn.id === 'pencilBtn' || btn.id === 'eraserBtn' || btn.id === 'selectBtn' || btn.id === 'shapeBtn') {
+        btn.classList.remove('active');
+      }
+    });
     
-    const btnId = tool === 'pencil' ? 'pencilBtn' : tool === 'eraser' ? 'eraserBtn' : 'shapeBtn';
+    const btnId = tool === 'pencil' ? 'pencilBtn' : tool === 'eraser' ? 'eraserBtn' : tool === 'select' ? 'selectBtn' : 'shapeBtn';
     const btn = document.getElementById(btnId);
     if (btn) btn.classList.add('active');
+    
+    // אם עוברים לכלי בחירה, בטל בחירת צורות
+    if (tool !== 'select') {
+      this.deselectAllShapes();
+    }
+    
+    // עדכן cursor
+    const canvases = document.querySelectorAll('.page-canvas');
+    canvases.forEach(canvas => {
+      if (tool === 'select') {
+        canvas.style.cursor = 'default';
+      } else if (tool === 'eraser') {
+        canvas.style.cursor = 'crosshair';
+      } else {
+        canvas.style.cursor = 'crosshair';
+      }
+    });
   },
 
   toggleShapeMenu() {
@@ -13749,6 +13977,509 @@ drawShape(x, y) {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       this.saveState();
     }
+  },
+
+  // === מערכת צורות ניתנות לעריכה ===
+  editableShapes: [],
+  selectedShape: null,
+  isDragging: false,
+  isResizing: false,
+  isRotating: false,
+  resizeHandle: null,
+  dragOffset: { x: 0, y: 0 },
+  shapeIdCounter: 0,
+
+  // יצירת צורה ניתנת לעריכה
+  createEditableShape(type, x, y, width, height, color, fill, thickness) {
+    const id = 'shape-' + (++this.shapeIdCounter);
+    const shape = {
+      id,
+      type,
+      x: Math.min(x, x + width),
+      y: Math.min(y, y + height),
+      width: Math.abs(width),
+      height: Math.abs(height),
+      color,
+      fill,
+      thickness,
+      rotation: 0
+    };
+    
+    this.editableShapes.push(shape);
+    this.renderEditableShape(shape);
+    return shape;
+  },
+
+  // רנדור צורה ניתנת לעריכה
+  renderEditableShape(shape) {
+    const notebookContent = document.getElementById('notebookContent');
+    if (!notebookContent) return;
+
+    // מצא את הדף הפעיל
+    const activePage = notebookContent.querySelector('.lined-page, .grid-page, .blank-page');
+    if (!activePage) return;
+
+    // בדוק אם כבר קיים - אם כן, עדכן
+    let container = document.getElementById(shape.id);
+    if (!container) {
+      container = document.createElement('div');
+      container.id = shape.id;
+      container.className = 'editable-shape';
+      container.innerHTML = `
+        <div class="shape-controls">
+          <button class="shape-control-btn" onclick="app.drawing.duplicateShape('${shape.id}')" title="שכפל">📋</button>
+          <input type="color" value="${shape.color}" onchange="app.drawing.changeShapeColor('${shape.id}', this.value)" style="width: 30px; height: 30px; border: none; cursor: pointer; border-radius: 4px;" title="שנה צבע">
+          <button class="shape-control-btn" onclick="app.drawing.toggleShapeFill('${shape.id}')" title="מילוי/קו">🎨</button>
+          <button class="shape-control-btn" onclick="app.drawing.bringToFront('${shape.id}')" title="הבא לחזית">⬆️</button>
+          <button class="shape-control-btn" onclick="app.drawing.sendToBack('${shape.id}')" title="שלח לרקע">⬇️</button>
+          <button class="shape-control-btn danger" onclick="app.drawing.deleteShape('${shape.id}')" title="מחק">🗑️</button>
+        </div>
+        <div class="shape-rotation-line"></div>
+        <div class="shape-rotate-handle" title="סובב">↻</div>
+        <div class="shape-resize-handle nw" data-handle="nw"></div>
+        <div class="shape-resize-handle ne" data-handle="ne"></div>
+        <div class="shape-resize-handle sw" data-handle="sw"></div>
+        <div class="shape-resize-handle se" data-handle="se"></div>
+        <svg></svg>
+      `;
+      activePage.appendChild(container);
+      
+      // אירועי עכבר
+      container.addEventListener('mousedown', (e) => this.onShapeMouseDown(e, shape.id));
+      
+      // אירועי ידיות שינוי גודל
+      container.querySelectorAll('.shape-resize-handle').forEach(handle => {
+        handle.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          this.startResize(e, shape.id, handle.dataset.handle);
+        });
+      });
+      
+      // אירוע סיבוב
+      container.querySelector('.shape-rotate-handle').addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        this.startRotation(e, shape.id);
+      });
+    }
+
+    // עדכן מיקום וגודל
+    container.style.left = shape.x + 'px';
+    container.style.top = shape.y + 'px';
+    container.style.width = shape.width + 'px';
+    container.style.height = shape.height + 'px';
+    container.style.transform = `rotate(${shape.rotation}deg)`;
+
+    // עדכן SVG
+    const svg = container.querySelector('svg');
+    svg.innerHTML = this.getShapeSVG(shape);
+  },
+
+  // קבלת SVG לפי סוג צורה
+  getShapeSVG(shape) {
+    const { type, width, height, color, fill, thickness } = shape;
+    const fillColor = fill ? color : 'none';
+    const strokeWidth = thickness || 2;
+
+    switch (type) {
+      case 'circle':
+        const rx = width / 2;
+        const ry = height / 2;
+        return `<ellipse cx="${rx}" cy="${ry}" rx="${rx - strokeWidth}" ry="${ry - strokeWidth}" 
+                  fill="${fillColor}" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+      
+      case 'square':
+      case 'rectangle':
+        return `<rect x="${strokeWidth/2}" y="${strokeWidth/2}" 
+                  width="${width - strokeWidth}" height="${height - strokeWidth}" 
+                  fill="${fillColor}" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+      
+      case 'triangle':
+        const points = `${width/2},${strokeWidth} ${strokeWidth},${height-strokeWidth} ${width-strokeWidth},${height-strokeWidth}`;
+        return `<polygon points="${points}" fill="${fillColor}" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+      
+      case 'line':
+        return `<line x1="0" y1="${height}" x2="${width}" y2="0" 
+                  stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round"/>`;
+      
+      case 'arrow':
+        const headlen = 15;
+        const angle = Math.atan2(-height, width);
+        const arrowPath = `M 0 ${height} L ${width} 0 
+          M ${width} 0 L ${width - headlen * Math.cos(angle - Math.PI / 6)} ${-headlen * Math.sin(angle - Math.PI / 6)}
+          M ${width} 0 L ${width - headlen * Math.cos(angle + Math.PI / 6)} ${-headlen * Math.sin(angle + Math.PI / 6)}`;
+        return `<path d="${arrowPath}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round"/>`;
+      
+      case 'star':
+        const cx = width / 2;
+        const cy = height / 2;
+        const outerR = Math.min(width, height) / 2 - strokeWidth;
+        const innerR = outerR / 2;
+        let starPoints = '';
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? outerR : innerR;
+          const angle2 = (i * 36 - 90) * Math.PI / 180;
+          const px = cx + r * Math.cos(angle2);
+          const py = cy + r * Math.sin(angle2);
+          starPoints += (i === 0 ? '' : ' ') + px + ',' + py;
+        }
+        return `<polygon points="${starPoints}" fill="${fillColor}" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+      
+      case 'heart':
+        const hcx = width / 2;
+        const hcy = height / 2;
+        const heartPath = `M ${hcx} ${height * 0.9}
+          C ${hcx} ${height * 0.7}, ${width * 0.1} ${height * 0.55}, ${width * 0.1} ${height * 0.35}
+          C ${width * 0.1} ${height * 0.1}, ${hcx * 0.5} 0, ${hcx} ${height * 0.25}
+          C ${hcx * 1.5} 0, ${width * 0.9} ${height * 0.1}, ${width * 0.9} ${height * 0.35}
+          C ${width * 0.9} ${height * 0.55}, ${hcx} ${height * 0.7}, ${hcx} ${height * 0.9} Z`;
+        return `<path d="${heartPath}" fill="${fillColor}" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+      
+      case 'diamond':
+        const dPoints = `${width/2},${strokeWidth} ${width-strokeWidth},${height/2} ${width/2},${height-strokeWidth} ${strokeWidth},${height/2}`;
+        return `<polygon points="${dPoints}" fill="${fillColor}" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+      
+      default:
+        return `<rect x="0" y="0" width="${width}" height="${height}" fill="${fillColor}" stroke="${color}" stroke-width="${strokeWidth}"/>`;
+    }
+  },
+
+  // לחיצה על צורה
+  onShapeMouseDown(e, shapeId) {
+    if (this.currentTool !== 'select') return;
+    
+    e.stopPropagation();
+    e.preventDefault();
+    
+    this.selectShape(shapeId);
+    
+    const shape = this.editableShapes.find(s => s.id === shapeId);
+    if (!shape) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const zoom = 0.85;
+    
+    this.isDragging = true;
+    this.dragOffset = {
+      x: (e.clientX - rect.left) / zoom,
+      y: (e.clientY - rect.top) / zoom
+    };
+    
+    document.addEventListener('mousemove', this.boundOnDragMove);
+    document.addEventListener('mouseup', this.boundOnDragEnd);
+  },
+
+  // תחילת גרירה
+  boundOnDragMove: null,
+  boundOnDragEnd: null,
+
+  initDragHandlers() {
+    this.boundOnDragMove = this.onDragMove.bind(this);
+    this.boundOnDragEnd = this.onDragEnd.bind(this);
+    this.boundOnResizeMove = this.onResizeMove.bind(this);
+    this.boundOnResizeEnd = this.onResizeEnd.bind(this);
+    this.boundOnRotateMove = this.onRotateMove.bind(this);
+    this.boundOnRotateEnd = this.onRotateEnd.bind(this);
+  },
+
+  onDragMove(e) {
+    if (!this.isDragging || !this.selectedShape) return;
+    
+    const shape = this.editableShapes.find(s => s.id === this.selectedShape);
+    if (!shape) return;
+    
+    const container = document.getElementById(shape.id);
+    if (!container) return;
+    
+    const parent = container.parentElement;
+    const parentRect = parent.getBoundingClientRect();
+    const zoom = 0.85;
+    
+    shape.x = (e.clientX - parentRect.left) / zoom - this.dragOffset.x;
+    shape.y = (e.clientY - parentRect.top) / zoom - this.dragOffset.y;
+    
+    // גבולות
+    shape.x = Math.max(0, Math.min(shape.x, parent.offsetWidth - shape.width));
+    shape.y = Math.max(0, Math.min(shape.y, parent.offsetHeight - shape.height));
+    
+    container.style.left = shape.x + 'px';
+    container.style.top = shape.y + 'px';
+  },
+
+  onDragEnd() {
+    this.isDragging = false;
+    document.removeEventListener('mousemove', this.boundOnDragMove);
+    document.removeEventListener('mouseup', this.boundOnDragEnd);
+    this.saveShapesToStorage();
+  },
+
+  // שינוי גודל
+  startResize(e, shapeId, handle) {
+    this.selectShape(shapeId);
+    this.isResizing = true;
+    this.resizeHandle = handle;
+    
+    const shape = this.editableShapes.find(s => s.id === shapeId);
+    if (!shape) return;
+    
+    this.resizeStart = {
+      x: e.clientX,
+      y: e.clientY,
+      shapeX: shape.x,
+      shapeY: shape.y,
+      width: shape.width,
+      height: shape.height
+    };
+    
+    document.addEventListener('mousemove', this.boundOnResizeMove);
+    document.addEventListener('mouseup', this.boundOnResizeEnd);
+  },
+
+  boundOnResizeMove: null,
+  boundOnResizeEnd: null,
+
+  onResizeMove(e) {
+    if (!this.isResizing || !this.selectedShape) return;
+    
+    const shape = this.editableShapes.find(s => s.id === this.selectedShape);
+    if (!shape) return;
+    
+    const zoom = 0.85;
+    const dx = (e.clientX - this.resizeStart.x) / zoom;
+    const dy = (e.clientY - this.resizeStart.y) / zoom;
+    
+    const minSize = 20;
+    
+    switch (this.resizeHandle) {
+      case 'se':
+        shape.width = Math.max(minSize, this.resizeStart.width + dx);
+        shape.height = Math.max(minSize, this.resizeStart.height + dy);
+        break;
+      case 'sw':
+        const newWidthSW = Math.max(minSize, this.resizeStart.width - dx);
+        shape.x = this.resizeStart.shapeX + this.resizeStart.width - newWidthSW;
+        shape.width = newWidthSW;
+        shape.height = Math.max(minSize, this.resizeStart.height + dy);
+        break;
+      case 'ne':
+        shape.width = Math.max(minSize, this.resizeStart.width + dx);
+        const newHeightNE = Math.max(minSize, this.resizeStart.height - dy);
+        shape.y = this.resizeStart.shapeY + this.resizeStart.height - newHeightNE;
+        shape.height = newHeightNE;
+        break;
+      case 'nw':
+        const newWidthNW = Math.max(minSize, this.resizeStart.width - dx);
+        const newHeightNW = Math.max(minSize, this.resizeStart.height - dy);
+        shape.x = this.resizeStart.shapeX + this.resizeStart.width - newWidthNW;
+        shape.y = this.resizeStart.shapeY + this.resizeStart.height - newHeightNW;
+        shape.width = newWidthNW;
+        shape.height = newHeightNW;
+        break;
+    }
+    
+    this.renderEditableShape(shape);
+  },
+
+  onResizeEnd() {
+    this.isResizing = false;
+    this.resizeHandle = null;
+    document.removeEventListener('mousemove', this.boundOnResizeMove);
+    document.removeEventListener('mouseup', this.boundOnResizeEnd);
+    this.saveShapesToStorage();
+  },
+
+  // סיבוב
+  startRotation(e, shapeId) {
+    this.selectShape(shapeId);
+    this.isRotating = true;
+    
+    const shape = this.editableShapes.find(s => s.id === shapeId);
+    if (!shape) return;
+    
+    const container = document.getElementById(shapeId);
+    const rect = container.getBoundingClientRect();
+    const zoom = 0.85;
+    
+    this.rotateCenter = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+    this.initialRotation = shape.rotation;
+    this.startAngle = Math.atan2(
+      e.clientY - this.rotateCenter.y,
+      e.clientX - this.rotateCenter.x
+    ) * 180 / Math.PI;
+    
+    document.addEventListener('mousemove', this.boundOnRotateMove);
+    document.addEventListener('mouseup', this.boundOnRotateEnd);
+  },
+
+  boundOnRotateMove: null,
+  boundOnRotateEnd: null,
+
+  onRotateMove(e) {
+    if (!this.isRotating || !this.selectedShape) return;
+    
+    const shape = this.editableShapes.find(s => s.id === this.selectedShape);
+    if (!shape) return;
+    
+    const currentAngle = Math.atan2(
+      e.clientY - this.rotateCenter.y,
+      e.clientX - this.rotateCenter.x
+    ) * 180 / Math.PI;
+    
+    let rotation = this.initialRotation + (currentAngle - this.startAngle);
+    
+    // Snap to 15 degrees when holding Shift
+    if (e.shiftKey) {
+      rotation = Math.round(rotation / 15) * 15;
+    }
+    
+    shape.rotation = rotation;
+    
+    const container = document.getElementById(shape.id);
+    if (container) {
+      container.style.transform = `rotate(${rotation}deg)`;
+    }
+  },
+
+  onRotateEnd() {
+    this.isRotating = false;
+    document.removeEventListener('mousemove', this.boundOnRotateMove);
+    document.removeEventListener('mouseup', this.boundOnRotateEnd);
+    this.saveShapesToStorage();
+  },
+
+  // בחירת צורה
+  selectShape(shapeId) {
+    // בטל בחירה קודמת
+    document.querySelectorAll('.editable-shape.selected').forEach(el => {
+      el.classList.remove('selected');
+    });
+    
+    this.selectedShape = shapeId;
+    const container = document.getElementById(shapeId);
+    if (container) {
+      container.classList.add('selected');
+    }
+  },
+
+  // ביטול בחירה
+  deselectAllShapes() {
+    document.querySelectorAll('.editable-shape.selected').forEach(el => {
+      el.classList.remove('selected');
+    });
+    this.selectedShape = null;
+  },
+
+  // מחיקת צורה
+  deleteShape(shapeId) {
+    const container = document.getElementById(shapeId);
+    if (container) {
+      container.remove();
+    }
+    this.editableShapes = this.editableShapes.filter(s => s.id !== shapeId);
+    if (this.selectedShape === shapeId) {
+      this.selectedShape = null;
+    }
+    this.saveShapesToStorage();
+  },
+
+  // שכפול צורה
+  duplicateShape(shapeId) {
+    const shape = this.editableShapes.find(s => s.id === shapeId);
+    if (!shape) return;
+    
+    const newShape = this.createEditableShape(
+      shape.type,
+      shape.x + 20,
+      shape.y + 20,
+      shape.width,
+      shape.height,
+      shape.color,
+      shape.fill,
+      shape.thickness
+    );
+    newShape.rotation = shape.rotation;
+    this.renderEditableShape(newShape);
+    this.selectShape(newShape.id);
+    this.saveShapesToStorage();
+  },
+
+  // שינוי צבע
+  changeShapeColor(shapeId, color) {
+    const shape = this.editableShapes.find(s => s.id === shapeId);
+    if (!shape) return;
+    
+    shape.color = color;
+    this.renderEditableShape(shape);
+    this.saveShapesToStorage();
+  },
+
+  // החלפת מילוי/קו
+  toggleShapeFill(shapeId) {
+    const shape = this.editableShapes.find(s => s.id === shapeId);
+    if (!shape) return;
+    
+    shape.fill = !shape.fill;
+    this.renderEditableShape(shape);
+    this.saveShapesToStorage();
+  },
+
+  // הבא לחזית
+  bringToFront(shapeId) {
+    const container = document.getElementById(shapeId);
+    if (container && container.parentElement) {
+      container.parentElement.appendChild(container);
+    }
+  },
+
+  // שלח לרקע
+  sendToBack(shapeId) {
+    const container = document.getElementById(shapeId);
+    if (container && container.parentElement) {
+      const firstChild = container.parentElement.firstChild;
+      container.parentElement.insertBefore(container, firstChild);
+    }
+  },
+
+  // שמירת צורות
+  saveShapesToStorage() {
+    try {
+      // שמור לפי מחברת נוכחית
+      const notebookKey = app.currentNotebook || 'general';
+      const allShapes = JSON.parse(localStorage.getItem('allEditableShapes') || '{}');
+      allShapes[notebookKey] = this.editableShapes;
+      localStorage.setItem('allEditableShapes', JSON.stringify(allShapes));
+    } catch (e) {
+      console.error('שגיאה בשמירת צורות:', e);
+    }
+  },
+
+  // טעינת צורות
+  loadShapesFromStorage() {
+    try {
+      const notebookKey = app.currentNotebook || 'general';
+      const allShapes = JSON.parse(localStorage.getItem('allEditableShapes') || '{}');
+      this.editableShapes = allShapes[notebookKey] || [];
+      
+      // מצא את ה-ID הגבוה ביותר
+      this.editableShapes.forEach(shape => {
+        const num = parseInt(shape.id.split('-')[1]);
+        if (num > this.shapeIdCounter) {
+          this.shapeIdCounter = num;
+        }
+      });
+    } catch (e) {
+      console.error('שגיאה בטעינת צורות:', e);
+      this.editableShapes = [];
+    }
+  },
+
+  // רנדור כל הצורות השמורות
+  renderAllShapes() {
+    this.editableShapes.forEach(shape => {
+      this.renderEditableShape(shape);
+    });
   }
 },
 
