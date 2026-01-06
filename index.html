@@ -13486,8 +13486,11 @@ canvas._undo = () => {
     startX = pos.x;
     startY = pos.y;
     
-    ctx.beginPath();
-    ctx.moveTo(pos.x, pos.y);
+    // רק אם זה לא כלי צורה - התחל path
+    if (this.currentTool !== 'shape') {
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
     
     if (this.currentTool === 'shape') {
       tempCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height);
