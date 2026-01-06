@@ -8907,6 +8907,7 @@ savePage(pageIndex, content) {
         shapes.push({
           type: shape.dataset.shapeType,
           color: shape.dataset.color,
+          fillColor: shape.dataset.fillColor || shape.dataset.color,
           thickness: shape.dataset.thickness,
           fill: shape.dataset.fill,
           rotation: shape.dataset.rotation,
@@ -8950,6 +8951,7 @@ saveCurrentNotebookDrawings() {
       shapes.push({
         type: shape.dataset.shapeType,
         color: shape.dataset.color,
+        fillColor: shape.dataset.fillColor || shape.dataset.color,
         thickness: shape.dataset.thickness,
         fill: shape.dataset.fill,
         rotation: shape.dataset.rotation,
@@ -14356,8 +14358,13 @@ interactiveShapes: {
   
   setFillColor(wrapper, color) {
     const shape = wrapper.querySelector('svg rect, svg ellipse, svg polygon, svg path, svg circle');
-    if (shape && shape.getAttribute('fill') !== 'none') {
-      shape.setAttribute('fill', color);
+    if (shape) {
+      // שמור את צבע המילוי
+      wrapper.dataset.fillColor = color;
+      // אם הצורה מלאה, עדכן את הצבע
+      if (wrapper.dataset.fill === 'true') {
+        shape.setAttribute('fill', color);
+      }
     }
     this.saveShapes();
   },
@@ -14368,7 +14375,9 @@ interactiveShapes: {
     
     const currentFill = shape.getAttribute('fill');
     if (currentFill === 'none' || !currentFill) {
-      shape.setAttribute('fill', wrapper.dataset.color);
+      // השתמש בצבע המילוי השמור, או בצבע הקו כברירת מחדל
+      const fillColor = wrapper.dataset.fillColor || wrapper.dataset.color;
+      shape.setAttribute('fill', fillColor);
       wrapper.dataset.fill = 'true';
     } else {
       shape.setAttribute('fill', 'none');
@@ -14488,16 +14497,27 @@ interactiveShapes: {
     svg.style.cssText = 'overflow: visible; display: block;';
     
     const fill = shapeData.fill === 'true';
+    const fillColor = shapeData.fillColor || shapeData.color;
     const shape = this.createSVGShape(
       shapeData.type, width, height, 
       shapeData.color, parseInt(shapeData.thickness), fill,
       0, 0, width, height, width, height
     );
+    
+    // אם יש צבע מילוי נפרד והצורה מלאה, עדכן את צבע המילוי
+    if (fill && fillColor !== shapeData.color) {
+      const fillElement = shape.querySelector ? shape.querySelector('rect, ellipse, polygon, path, circle') : shape;
+      if (fillElement && fillElement.setAttribute) {
+        fillElement.setAttribute('fill', fillColor);
+      }
+    }
+    
     svg.appendChild(shape);
     shapeWrapper.appendChild(svg);
     
     shapeWrapper.dataset.shapeType = shapeData.type;
     shapeWrapper.dataset.color = shapeData.color;
+    shapeWrapper.dataset.fillColor = fillColor;
     shapeWrapper.dataset.thickness = shapeData.thickness;
     shapeWrapper.dataset.fill = shapeData.fill;
     shapeWrapper.dataset.rotation = shapeData.rotation || '0';
