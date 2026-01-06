@@ -8795,6 +8795,18 @@ if (pageData.drawing) {
   }, 200);
 }
 
+// טעינת צורות אינטראקטיביות שמורות
+if (pageData.interactiveShapes && pageData.interactiveShapes.length > 0) {
+  setTimeout(() => {
+    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
+    if (pageContainer) {
+      pageData.interactiveShapes.forEach(shapeData => {
+        app.interactiveShapes.loadShape(pageContainer, shapeData, index);
+      });
+    }
+  }, 250);
+}
+
 // טעינת נוסחאות שמורות
 if (pageData.formulas && pageData.formulas.length > 0) {
   setTimeout(() => {
@@ -8888,6 +8900,23 @@ savePage(pageIndex, content) {
       if (canvas) {
         this.subjects[this.currentNotebook].pages[pageIndex].drawing = canvas.toDataURL();
       }
+      
+      // שמירת צורות אינטראקטיביות
+      const shapes = [];
+      pageContainer.querySelectorAll('.interactive-shape').forEach(shape => {
+        shapes.push({
+          type: shape.dataset.shapeType,
+          color: shape.dataset.color,
+          thickness: shape.dataset.thickness,
+          fill: shape.dataset.fill,
+          rotation: shape.dataset.rotation,
+          left: shape.style.left,
+          top: shape.style.top,
+          width: shape.style.width,
+          height: shape.style.height
+        });
+      });
+      this.subjects[this.currentNotebook].pages[pageIndex].interactiveShapes = shapes;
     }
     
     this.saveNotebookData();
@@ -8913,6 +8942,25 @@ saveCurrentNotebookDrawings() {
       if (hasDrawing) {
         this.subjects[this.currentNotebook].pages[index].drawing = canvas.toDataURL();
       }
+    }
+    
+    // שמירת צורות אינטראקטיביות
+    const shapes = [];
+    pageContainer.querySelectorAll('.interactive-shape').forEach(shape => {
+      shapes.push({
+        type: shape.dataset.shapeType,
+        color: shape.dataset.color,
+        thickness: shape.dataset.thickness,
+        fill: shape.dataset.fill,
+        rotation: shape.dataset.rotation,
+        left: shape.style.left,
+        top: shape.style.top,
+        width: shape.style.width,
+        height: shape.style.height
+      });
+    });
+    if (shapes.length > 0) {
+      this.subjects[this.currentNotebook].pages[index].interactiveShapes = shapes;
     }
     
     // שמירת נוסחאות
@@ -14037,6 +14085,9 @@ interactiveShapes: {
     this.shapes.push(shapeWrapper);
     this.selectShape(shapeWrapper);
     
+    // שמירה אוטומטית
+    this.saveShapes();
+    
     return shapeWrapper;
   },
   
@@ -14175,8 +14226,14 @@ interactiveShapes: {
     const controls = document.createElement('div');
     controls.className = 'shape-controls';
     controls.innerHTML = `
-      <input type="color" class="shape-color-input stroke-color" value="${wrapper.dataset.color}" title="צבע קו">
-      <input type="color" class="shape-color-input fill-color" value="${wrapper.dataset.color}" title="צבע מילוי">
+      <div style="display:flex;align-items:center;gap:2px;" title="צבע קו">
+        <span style="font-size:12px;">🖊️</span>
+        <input type="color" class="shape-color-input stroke-color" value="${wrapper.dataset.color}">
+      </div>
+      <div style="display:flex;align-items:center;gap:2px;" title="צבע מילוי">
+        <span style="font-size:12px;">🎨</span>
+        <input type="color" class="shape-color-input fill-color" value="${wrapper.dataset.color}">
+      </div>
       <button class="shape-control-btn fill-toggle" title="מילוי/ללא מילוי">🪣</button>
       <button class="shape-control-btn delete-btn" title="מחק">🗑️</button>
     `;
@@ -14270,6 +14327,7 @@ interactiveShapes: {
       if (isDragging) {
         isDragging = false;
         wrapper.style.cursor = 'move';
+        self.saveShapes();
       }
     });
   },
@@ -14293,6 +14351,7 @@ interactiveShapes: {
     const shapes = wrapper.querySelectorAll('svg *[stroke]');
     shapes.forEach(s => s.setAttribute('stroke', color));
     wrapper.dataset.color = color;
+    this.saveShapes();
   },
   
   setFillColor(wrapper, color) {
@@ -14300,6 +14359,7 @@ interactiveShapes: {
     if (shape && shape.getAttribute('fill') !== 'none') {
       shape.setAttribute('fill', color);
     }
+    this.saveShapes();
   },
   
   toggleFill(wrapper) {
@@ -14314,6 +14374,7 @@ interactiveShapes: {
       shape.setAttribute('fill', 'none');
       wrapper.dataset.fill = 'false';
     }
+    this.saveShapes();
   },
   
   startRotate(wrapper, e) {
@@ -14322,6 +14383,7 @@ interactiveShapes: {
     const cy = rect.top + rect.height / 2;
     const startAngle = Math.atan2(e.clientY - cy, e.clientX - cx);
     const initRotation = parseFloat(wrapper.dataset.rotation) || 0;
+    const self = this;
     
     const onMove = (ev) => {
       const angle = Math.atan2(ev.clientY - cy, ev.clientX - cx);
@@ -14333,6 +14395,7 @@ interactiveShapes: {
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      self.saveShapes();
     };
     
     document.addEventListener('mousemove', onMove);
@@ -14371,6 +14434,7 @@ interactiveShapes: {
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      self.saveShapes();
     };
     
     document.addEventListener('mousemove', onMove);
@@ -14396,6 +14460,63 @@ interactiveShapes: {
     if (idx > -1) this.shapes.splice(idx, 1);
     if (this.selectedShape === wrapper) this.selectedShape = null;
     wrapper.remove();
+    this.saveShapes();
+  },
+  
+  // טעינת צורה שמורה
+  loadShape(container, shapeData, pageIndex) {
+    const width = parseFloat(shapeData.width);
+    const height = parseFloat(shapeData.height);
+    
+    const shapeWrapper = document.createElement('div');
+    shapeWrapper.className = 'interactive-shape';
+    shapeWrapper.style.cssText = `
+      position: absolute;
+      left: ${shapeData.left};
+      top: ${shapeData.top};
+      width: ${shapeData.width};
+      height: ${shapeData.height};
+    `;
+    
+    if (shapeData.rotation && shapeData.rotation !== '0') {
+      shapeWrapper.style.transform = `rotate(${shapeData.rotation}deg)`;
+    }
+    
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.style.cssText = 'overflow: visible; display: block;';
+    
+    const fill = shapeData.fill === 'true';
+    const shape = this.createSVGShape(
+      shapeData.type, width, height, 
+      shapeData.color, parseInt(shapeData.thickness), fill,
+      0, 0, width, height, width, height
+    );
+    svg.appendChild(shape);
+    shapeWrapper.appendChild(svg);
+    
+    shapeWrapper.dataset.shapeType = shapeData.type;
+    shapeWrapper.dataset.color = shapeData.color;
+    shapeWrapper.dataset.thickness = shapeData.thickness;
+    shapeWrapper.dataset.fill = shapeData.fill;
+    shapeWrapper.dataset.rotation = shapeData.rotation || '0';
+    shapeWrapper.dataset.pageIndex = pageIndex;
+    
+    this.addControls(shapeWrapper);
+    this.addResizeHandles(shapeWrapper);
+    this.addRotateHandle(shapeWrapper);
+    this.makeDraggable(shapeWrapper);
+    
+    container.appendChild(shapeWrapper);
+    this.shapes.push(shapeWrapper);
+  },
+  
+  // שמירת כל הצורות
+  saveShapes() {
+    if (app.currentNotebook) {
+      app.saveCurrentNotebookDrawings();
+    }
   },
   
   setupGlobalListeners() {
