@@ -14230,6 +14230,7 @@ interactiveShapes: {
   addControls(wrapper) {
     const controls = document.createElement('div');
     controls.className = 'shape-controls';
+    const fillColor = wrapper.dataset.fillColor || wrapper.dataset.color;
     controls.innerHTML = `
       <div style="display:flex;align-items:center;gap:2px;" title="צבע קו">
         <span style="font-size:12px;">🖊️</span>
@@ -14237,7 +14238,7 @@ interactiveShapes: {
       </div>
       <div style="display:flex;align-items:center;gap:2px;" title="צבע מילוי">
         <span style="font-size:12px;">🎨</span>
-        <input type="color" class="shape-color-input fill-color" value="${wrapper.dataset.color}">
+        <input type="color" class="shape-color-input fill-color" value="${fillColor}">
       </div>
       <button class="shape-control-btn fill-toggle" title="מילוי/ללא מילוי">🪣</button>
       <button class="shape-control-btn delete-btn" title="מחק">🗑️</button>
@@ -14507,8 +14508,8 @@ interactiveShapes: {
       0, 0, width, height, width, height
     );
     
-    // אם יש צבע מילוי נפרד והצורה מלאה, עדכן את צבע המילוי
-    if (fill && fillColor !== shapeData.color) {
+    // אם הצורה מלאה, עדכן את צבע המילוי לצבע הנכון
+    if (fill) {
       const fillElement = shape.querySelector ? shape.querySelector('rect, ellipse, polygon, path, circle') : shape;
       if (fillElement && fillElement.setAttribute) {
         fillElement.setAttribute('fill', fillColor);
