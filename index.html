@@ -14537,9 +14537,33 @@ interactiveShapes: {
   
   // שמירת כל הצורות
   saveShapes() {
-    if (app.currentNotebook) {
-      app.saveCurrentNotebookDrawings();
-    }
+    if (!app.currentNotebook) return;
+    
+    const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
+    pages.forEach((pageContainer, index) => {
+      if (!app.subjects[app.currentNotebook].pages[index]) return;
+      
+      // שמירת צורות אינטראקטיביות
+      const shapes = [];
+      pageContainer.querySelectorAll('.interactive-shape').forEach(shape => {
+        shapes.push({
+          type: shape.dataset.shapeType,
+          color: shape.dataset.color,
+          fillColor: shape.dataset.fillColor || shape.dataset.color,
+          thickness: shape.dataset.thickness,
+          fill: shape.dataset.fill,
+          rotation: shape.dataset.rotation,
+          left: shape.style.left,
+          top: shape.style.top,
+          width: shape.style.width,
+          height: shape.style.height
+        });
+      });
+      app.subjects[app.currentNotebook].pages[index].interactiveShapes = shapes;
+    });
+    
+    // שמירה ל-Supabase
+    app.saveNotebookData();
   },
   
   setupGlobalListeners() {
