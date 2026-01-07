@@ -14502,16 +14502,19 @@ interactiveShapes: {
     
     const fill = shapeData.fill === 'true';
     const fillColor = shapeData.fillColor || shapeData.color;
+    const strokeColor = shapeData.color;
+    
+    // יצירת הצורה עם צבע הקו
     const shape = this.createSVGShape(
       shapeData.type, width, height, 
-      shapeData.color, parseInt(shapeData.thickness), fill,
+      strokeColor, parseInt(shapeData.thickness), fill,
       0, 0, width, height, width, height
     );
     
-    // אם הצורה מלאה, עדכן את צבע המילוי לצבע הנכון
-    if (fill) {
-      const fillElement = shape.querySelector ? shape.querySelector('rect, ellipse, polygon, path, circle') : shape;
-      if (fillElement && fillElement.setAttribute) {
+    // עדכון צבע המילוי בנפרד אם הצורה מלאה
+    if (fill && shape) {
+      const fillElement = shape.tagName === 'g' ? shape.querySelector('rect, ellipse, polygon, path, circle') : shape;
+      if (fillElement && fillElement.getAttribute('fill') !== 'none') {
         fillElement.setAttribute('fill', fillColor);
       }
     }
