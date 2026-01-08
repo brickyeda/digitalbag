@@ -16502,21 +16502,30 @@ const TutorialSystem = {
   completedTutorials: {},
   currentUserId: null,
 
+  getCurrentUser() {
+    // בדוק את כל המקומות האפשריים למשתמש
+    if (typeof currentUser !== 'undefined' && currentUser) return currentUser;
+    if (app && app.currentUser) return app.currentUser;
+    return null;
+  },
+
   getLocalStorageKey() {
-    return 'tutorialState_' + (this.currentUserId || 'guest');
+    const user = this.getCurrentUser();
+    return 'tutorialState_' + (user ? user.id : 'guest');
   },
 
   async loadTutorialState() {
     // שמור מזהה משתמש נוכחי
-    this.currentUserId = app.currentUser ? app.currentUser.id : null;
+    const user = this.getCurrentUser();
+    this.currentUserId = user ? user.id : null;
     this.completedTutorials = {};
     
     try {
-      if (typeof supabase !== 'undefined' && supabase && app.currentUser) {
+      if (typeof supabase !== 'undefined' && supabase && user) {
         const { data } = await supabase
           .from('user_data')
           .select('data')
-          .eq('user_id', app.currentUser.id)
+          .eq('user_id', user.id)
           .eq('data_type', 'tutorial_state')
           .single();
         if (data && data.data) {
@@ -16540,13 +16549,15 @@ const TutorialSystem = {
   },
 
   async saveTutorialState() {
+    const user = this.getCurrentUser();
+    
     // שמור ב-localStorage עם מזהה משתמש
     localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(this.completedTutorials));
     
     try {
-      if (typeof supabase !== 'undefined' && supabase && app.currentUser) {
+      if (typeof supabase !== 'undefined' && supabase && user) {
         await supabase.from('user_data').upsert({
-          user_id: app.currentUser.id,
+          user_id: user.id,
           data_type: 'tutorial_state',
           data: this.completedTutorials,
           updated_at: new Date().toISOString()
@@ -16650,7 +16661,8 @@ const TutorialSystem = {
   checkAndStartTutorial(pageId) {
     setTimeout(async () => {
       // בדוק אם המשתמש השתנה
-      const currentUserId = app.currentUser ? app.currentUser.id : null;
+      const user = this.getCurrentUser();
+      const currentUserId = user ? user.id : null;
       if (currentUserId !== this.currentUserId) {
         console.log('🔄 משתמש השתנה, טוען מצב טוטוריאל מחדש');
         await this.loadTutorialState();
