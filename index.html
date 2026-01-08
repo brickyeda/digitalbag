@@ -16500,8 +16500,17 @@ const TutorialSystem = {
   highlightedEl: null,
   oldStyle: '',
   completedTutorials: {},
+  currentUserId: null,
+
+  getLocalStorageKey() {
+    return 'tutorialState_' + (this.currentUserId || 'guest');
+  },
 
   async loadTutorialState() {
+    // שמור מזהה משתמש נוכחי
+    this.currentUserId = app.currentUser ? app.currentUser.id : null;
+    this.completedTutorials = {};
+    
     try {
       if (typeof supabase !== 'undefined' && supabase && app.currentUser) {
         const { data } = await supabase
@@ -16512,16 +16521,28 @@ const TutorialSystem = {
           .single();
         if (data && data.data) {
           this.completedTutorials = data.data;
-          console.log('✅ מצב טוטוריאל נטען');
+          console.log('✅ מצב טוטוריאל נטען מ-Supabase:', this.completedTutorials);
+          // עדכן גם localStorage
+          localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(this.completedTutorials));
+          return;
         }
       }
     } catch (e) {
-      const saved = localStorage.getItem('tutorialState');
-      if (saved) this.completedTutorials = JSON.parse(saved);
+      console.log('⚠️ טעינה מ-Supabase נכשלה, מנסה localStorage');
+    }
+    
+    // נסה מ-localStorage עם מזהה משתמש
+    const saved = localStorage.getItem(this.getLocalStorageKey());
+    if (saved) {
+      this.completedTutorials = JSON.parse(saved);
+      console.log('✅ מצב טוטוריאל נטען מ-localStorage:', this.completedTutorials);
     }
   },
 
   async saveTutorialState() {
+    // שמור ב-localStorage עם מזהה משתמש
+    localStorage.setItem(this.getLocalStorageKey(), JSON.stringify(this.completedTutorials));
+    
     try {
       if (typeof supabase !== 'undefined' && supabase && app.currentUser) {
         await supabase.from('user_data').upsert({
@@ -16530,9 +16551,11 @@ const TutorialSystem = {
           data: this.completedTutorials,
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id,data_type' });
+        console.log('✅ מצב טוטוריאל נשמר ב-Supabase');
       }
-    } catch (e) {}
-    localStorage.setItem('tutorialState', JSON.stringify(this.completedTutorials));
+    } catch (e) {
+      console.log('⚠️ שמירה ב-Supabase נכשלה');
+    }
   },
 
   isPageCompleted(pageId) {
@@ -16625,7 +16648,14 @@ const TutorialSystem = {
   },
 
   checkAndStartTutorial(pageId) {
-    setTimeout(() => {
+    setTimeout(async () => {
+      // בדוק אם המשתמש השתנה
+      const currentUserId = app.currentUser ? app.currentUser.id : null;
+      if (currentUserId !== this.currentUserId) {
+        console.log('🔄 משתמש השתנה, טוען מצב טוטוריאל מחדש');
+        await this.loadTutorialState();
+      }
+      
       if (!this.isPageCompleted(pageId) && this.tutorials[pageId]) {
         console.log('🎯 מפעיל טוטוריאל:', pageId);
         this.startTutorial(pageId);
