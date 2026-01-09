@@ -10316,6 +10316,11 @@ async exportNotebookToPDF() {
   document.body.appendChild(loadingMessage);
   
   try {
+    // טעינת html2canvas לציורים
+    if (typeof html2canvas === 'undefined') {
+      await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    }
+    
     // טעינת jsPDF
     if (typeof jspdf === 'undefined') {
       await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
@@ -10389,49 +10394,98 @@ async exportNotebookToPDF() {
     // עבור על כל דף במחברת
     for (let pageIdx = 0; pageIdx < pageElements.length; pageIdx++) {
       const pageEl = pageElements[pageIdx];
-      const textarea = pageEl.querySelector('textarea');
-      if (!textarea) continue;
       
-      const text = textarea.value || '';
-      if (!text.trim()) continue;
+      // בדוק אם יש ציורים או צורות בדף
+      const hasDrawings = pageEl.querySelector('canvas') || pageEl.querySelector('.interactive-shape') || pageEl.querySelector('.draggable-image');
       
-      const textLines = text.split('\n');
-      let currentLine = 0;
-      
-      while (currentLine < textLines.length) {
-        if (!isFirstPdfPage) {
-          pdf.addPage();
-        }
-        isFirstPdfPage = false;
-        
-        // ציור קווי מחברת
-        pdf.setDrawColor(210, 225, 240);
-        pdf.setLineWidth(0.2);
-        for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
-          pdf.line(15, y, pageWidth - 15, y);
-        }
-        
-        // קו שוליים אדום
-        pdf.setDrawColor(255, 107, 107);
-        pdf.setLineWidth(0.4);
-        pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
-        
-        // כתיבת הטקסט
-        pdf.setTextColor(44, 62, 80);
-        let y = marginTop;
-        
-        for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
-          const line = textLines[currentLine];
-          if (line && line.trim()) {
-            const result = processLineForPDF(line);
-            if (result.isRTL) {
-              pdf.text(result.text, pageWidth - marginRight, y, { align: 'right' });
-            } else {
-              pdf.text(result.text, marginLeft, y, { align: 'left' });
-            }
+      if (hasDrawings) {
+        // אם יש ציורים - צלם את הדף כתמונה
+        try {
+          loadingMessage.innerHTML = `
+            <div style="margin-bottom: 15px;">📄</div>
+            <div>יוצר PDF...</div>
+            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">מצלם דף ${pageIdx + 1} עם ציורים...</div>
+          `;
+          
+          const canvas = await html2canvas(pageEl, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false
+          });
+          
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          
+          // חישוב גודל התמונה
+          const imgWidth = pageWidth - 20;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          
+          // אם התמונה גבוהה מדי, נצמצם אותה
+          let finalWidth = imgWidth;
+          let finalHeight = imgHeight;
+          if (imgHeight > pageHeight - 20) {
+            finalHeight = pageHeight - 20;
+            finalWidth = (canvas.width * finalHeight) / canvas.height;
           }
-          y += lineHeight;
-          currentLine++;
+          
+          if (!isFirstPdfPage) {
+            pdf.addPage();
+          }
+          isFirstPdfPage = false;
+          
+          const xPos = (pageWidth - finalWidth) / 2;
+          pdf.addImage(imgData, 'JPEG', xPos, 10, finalWidth, finalHeight);
+          
+        } catch (drawingError) {
+          console.error('שגיאה בצילום ציור:', drawingError);
+        }
+      } else {
+        // אם אין ציורים - ייצא טקסט רגיל
+        const textarea = pageEl.querySelector('textarea');
+        if (!textarea) continue;
+        
+        const text = textarea.value || '';
+        if (!text.trim()) continue;
+        
+        const textLines = text.split('\n');
+        let currentLine = 0;
+        
+        while (currentLine < textLines.length) {
+          if (!isFirstPdfPage) {
+            pdf.addPage();
+          }
+          isFirstPdfPage = false;
+          
+          // ציור קווי מחברת
+          pdf.setDrawColor(210, 225, 240);
+          pdf.setLineWidth(0.2);
+          for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
+            pdf.line(15, y, pageWidth - 15, y);
+          }
+          
+          // קו שוליים אדום
+          pdf.setDrawColor(255, 107, 107);
+          pdf.setLineWidth(0.4);
+          pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
+          
+          // כתיבת הטקסט
+          pdf.setTextColor(44, 62, 80);
+          let y = marginTop;
+          
+          for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
+            const line = textLines[currentLine];
+            if (line && line.trim()) {
+              const result = processLineForPDF(line);
+              if (result.isRTL) {
+                pdf.text(result.text, pageWidth - marginRight, y, { align: 'right' });
+              } else {
+                pdf.text(result.text, marginLeft, y, { align: 'left' });
+              }
+            }
+            y += lineHeight;
+            currentLine++;
+          }
         }
       }
     }
