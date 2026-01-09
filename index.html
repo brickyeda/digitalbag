@@ -7525,10 +7525,24 @@ height: 100%;
 
           console.log('✅ נתונים נשמרו - מתנתק...');
 
+          // שמור את מצב הטוטוריאל לפני מחיקה
+          const tutorialKeys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('tutorialState_')) {
+              tutorialKeys.push({ key: key, value: localStorage.getItem(key) });
+            }
+          }
+
           // התנתק
           await supabaseClient.auth.signOut();
           localStorage.clear();
           sessionStorage.clear();
+          
+          // שחזר את מצב הטוטוריאל
+          tutorialKeys.forEach(item => {
+            localStorage.setItem(item.key, item.value);
+          });
           
           window.location.replace('login_FIXED_NOW.html?t=' + Date.now() + '&reason=timeout');
         } catch (error) {
