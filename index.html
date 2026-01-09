@@ -7587,11 +7587,25 @@ height: 100%;
           // התנתק מ-Supabase קודם
           await supabaseClient.auth.signOut();
           
+          // שמור את מצב הטוטוריאל לפני מחיקה
+          const tutorialKeys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('tutorialState_')) {
+              tutorialKeys.push({ key: key, value: localStorage.getItem(key) });
+            }
+          }
+          
           // נקה את כל הנתונים המקומיים
           localStorage.clear();
           sessionStorage.clear();
           
-          console.log('✅ התנתקות הצליחה - נתונים מקומיים נוקו');
+          // שחזר את מצב הטוטוריאל
+          tutorialKeys.forEach(item => {
+            localStorage.setItem(item.key, item.value);
+          });
+          
+          console.log('✅ התנתקות הצליחה - נתונים מקומיים נוקו (מצב טוטוריאל נשמר)');
           
           // הוסף cache busting - מונע בעיות cache
           window.location.replace('login_FIXED_NOW.html?t=' + Date.now());
