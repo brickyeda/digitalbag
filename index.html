@@ -10316,6 +10316,11 @@ async exportNotebookToPDF() {
   document.body.appendChild(loadingMessage);
   
   try {
+    // טעינת html2canvas
+    if (typeof html2canvas === 'undefined') {
+      await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    }
+    
     // טעינת jsPDF
     if (typeof jspdf === 'undefined') {
       await this.loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
@@ -10323,55 +10328,6 @@ async exportNotebookToPDF() {
     
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    
-    // טעינת גופן עברי
-    try {
-      const response = await fetch('https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4i1UA.ttf');
-      const arrayBuffer = await response.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-      let binary = '';
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-      pdf.addFileToVFS('Rubik.ttf', btoa(binary));
-      pdf.addFont('Rubik.ttf', 'Rubik', 'normal');
-      pdf.setFont('Rubik');
-    } catch(e) {
-      console.error('שגיאה בטעינת גופן:', e);
-    }
-    
-    // הגדרות עמוד
-    const pageWidth = 210, pageHeight = 297;
-    const marginRight = 25, marginLeft = 20, marginTop = 30, lineHeight = 8;
-    const linesPerPage = Math.floor((pageHeight - marginTop - 20) / lineHeight);
-    
-    pdf.setFontSize(12);
-    
-    // פונקציה להפיכת טקסט עברי בלבד (שומרת על אנגלית ומספרים)
-    const processLineForPDF = (str) => {
-      const hasHebrew = /[\u0590-\u05FF]/.test(str);
-      if (!hasHebrew) return { text: str, isRTL: false };
-      
-      const hasEnglish = /[a-zA-Z]/.test(str);
-      if (!hasEnglish) {
-        // עברית בלבד - להפוך
-        return { text: str.split('').reverse().join(''), isRTL: true };
-      }
-      
-      // שורה מעורבת
-      const parts = str.match(/[\u0590-\u05FF]+|\s+|[^\u0590-\u05FF\s]+/g);
-      
-      let hebrewEnd = 0;
-      for (let i = 0; i < parts.length; i++) {
-        if (/[a-zA-Z0-9]/.test(parts[i])) {
-          hebrewEnd = i;
-          break;
-        }
-      }
-      
-      const hebrewPart = parts.slice(0, hebrewEnd).join('');
-      const englishPart = parts.slice(hebrewEnd).join('');
-      
-      return { text: englishPart + hebrewPart, isRTL: true };
-    };
     
     // קבלת הדפים לייצוא
     const notebookContent = document.getElementById('notebookContent');
@@ -10384,55 +10340,59 @@ async exportNotebookToPDF() {
       return;
     }
     
+    const pageWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
+    const margin = 10;
+    
     let isFirstPdfPage = true;
     
     // עבור על כל דף במחברת
     for (let pageIdx = 0; pageIdx < pageElements.length; pageIdx++) {
       const pageEl = pageElements[pageIdx];
-      const textarea = pageEl.querySelector('textarea');
-      if (!textarea) continue;
       
-      const text = textarea.value || '';
-      if (!text.trim()) continue;
+      // עדכון הודעת טעינה
+      loadingMessage.innerHTML = `
+        <div style="margin-bottom: 15px;">📄</div>
+        <div>יוצר PDF...</div>
+        <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">דף ${pageIdx + 1} מתוך ${pageElements.length}</div>
+      `;
       
-      const textLines = text.split('\n');
-      let currentLine = 0;
-      
-      while (currentLine < textLines.length) {
+      try {
+        // צילום הדף כתמונה
+        const canvas = await html2canvas(pageEl, {
+          scale: 2, // איכות גבוהה
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        
+        // חישוב גודל התמונה
+        const imgWidth = pageWidth - (margin * 2);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // אם התמונה גבוהה מדי, נצמצם אותה
+        let finalWidth = imgWidth;
+        let finalHeight = imgHeight;
+        if (imgHeight > pageHeight - (margin * 2)) {
+          finalHeight = pageHeight - (margin * 2);
+          finalWidth = (canvas.width * finalHeight) / canvas.height;
+        }
+        
         if (!isFirstPdfPage) {
           pdf.addPage();
         }
         isFirstPdfPage = false;
         
-        // ציור קווי מחברת
-        pdf.setDrawColor(210, 225, 240);
-        pdf.setLineWidth(0.2);
-        for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
-          pdf.line(15, y, pageWidth - 15, y);
-        }
+        // הוספת התמונה ל-PDF
+        const xPos = (pageWidth - finalWidth) / 2;
+        const yPos = margin;
+        pdf.addImage(imgData, 'JPEG', xPos, yPos, finalWidth, finalHeight);
         
-        // קו שוליים אדום
-        pdf.setDrawColor(255, 107, 107);
-        pdf.setLineWidth(0.4);
-        pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
-        
-        // כתיבת הטקסט
-        pdf.setTextColor(44, 62, 80);
-        let y = marginTop;
-        
-        for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
-          const line = textLines[currentLine];
-          if (line && line.trim()) {
-            const result = processLineForPDF(line);
-            if (result.isRTL) {
-              pdf.text(result.text, pageWidth - marginRight, y, { align: 'right' });
-            } else {
-              pdf.text(result.text, marginLeft, y, { align: 'left' });
-            }
-          }
-          y += lineHeight;
-          currentLine++;
-        }
+      } catch (pageError) {
+        console.error(`שגיאה בצילום דף ${pageIdx + 1}:`, pageError);
       }
     }
     
