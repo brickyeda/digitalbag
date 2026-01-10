@@ -8870,11 +8870,27 @@ async exportNotebookToPDF() {
         }
         isFirstPdfPage = false;
         
-        // ציור קווי מחברת
-        pdf.setDrawColor(210, 225, 240);
-        pdf.setLineWidth(0.2);
-        for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
-          pdf.line(15, y, pageWidth - 15, y);
+        // בדיקה אם זה דף משובץ או שורות
+        const isGridPage = pageEl.classList.contains('grid-page');
+        
+        if (isGridPage) {
+          // ציור משבצות
+          pdf.setDrawColor(200, 220, 240);
+          pdf.setLineWidth(0.1);
+          const gridSize = 5;
+          for (let x = 10; x < pageWidth - 10; x += gridSize) {
+            pdf.line(x, 20, x, pageHeight - 15);
+          }
+          for (let y = 20; y < pageHeight - 15; y += gridSize) {
+            pdf.line(10, y, pageWidth - 10, y);
+          }
+        } else {
+          // ציור קווי מחברת
+          pdf.setDrawColor(210, 225, 240);
+          pdf.setLineWidth(0.2);
+          for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
+            pdf.line(15, y, pageWidth - 15, y);
+          }
         }
         
         // קו שוליים אדום
