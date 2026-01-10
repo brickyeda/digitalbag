@@ -7366,7 +7366,7 @@ height: 100%;
       <div class="about-contact">
         <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
         <div class="about-contact-email">
-          <a href="/cdn-cgi/l/email-protection#3e7c6c777d75677b7a7f7e79737f7772107d7173"><span class="__cf_email__" data-cfemail="3775657e747c6e72737677707a767e7b1974787a">[email&#160;protected]</span></a>
+          <a href="mailto:brickyeda@gmail.com">brickyeda@gmail.com</a>
         </div>
       </div>
       
@@ -7413,7 +7413,7 @@ height: 100%;
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script>
     // ========== About Modal Functions ==========
     function openAboutModal() {
       document.getElementById('aboutModal').classList.add('active');
@@ -10457,11 +10457,27 @@ async exportNotebookToPDF() {
           }
           isFirstPdfPage = false;
           
-          // ציור קווי מחברת
-          pdf.setDrawColor(210, 225, 240);
-          pdf.setLineWidth(0.2);
-          for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
-            pdf.line(15, y, pageWidth - 15, y);
+          // בדיקה אם זה דף משובץ או שורות
+          const isGridPage = pageEl.classList.contains('grid-page');
+          
+          if (isGridPage) {
+            // ציור משבצות
+            pdf.setDrawColor(200, 220, 240);
+            pdf.setLineWidth(0.1);
+            const gridSize = 5;
+            for (let x = 10; x < pageWidth - 10; x += gridSize) {
+              pdf.line(x, 20, x, pageHeight - 15);
+            }
+            for (let y = 20; y < pageHeight - 15; y += gridSize) {
+              pdf.line(10, y, pageWidth - 10, y);
+            }
+          } else {
+            // ציור קווי מחברת
+            pdf.setDrawColor(210, 225, 240);
+            pdf.setLineWidth(0.2);
+            for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
+              pdf.line(15, y, pageWidth - 15, y);
+            }
           }
           
           // קו שוליים אדום
@@ -16773,9 +16789,9 @@ window.TutorialSystem = TutorialSystem;
     <span>🔔 התראות קרובות</span>
     <button onclick="app.closeNotificationsPanel();">✕</button>
   </div>
-  <div id="notificationPermissionBanner" style="display: none; background: #fff3cd; padding: 10px 15px; text-align: center; border-bottom: 1px solid #ffc107;">
+  <div id="notificationPermissionBanner" style="display: none; background: #fff3cd; padding: 10px 15px; text-align: center; border-bottom: 1px solid #ffc107; position: relative; z-index: 100000;">
     <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התראות כדי לקבל תזכורות</div>
-    <button onclick="app.requestNotificationPermission()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">אשר התראות</button>
+    <button onclick="app.requestNotificationPermission()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; pointer-events: auto; position: relative; z-index: 100001;">אשר התראות</button>
   </div>
   <div id="notificationsList" class="notifications-list">
     <!-- ההתראות יתווספו כאן דינמית -->
