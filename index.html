@@ -10352,38 +10352,30 @@ async exportNotebookToPDF() {
     
     // פונקציה לעיבוד שורה - הגרסה שעבדה מושלם!
     const processLineForPDF = (str) => {
-      // בדיקה אם יש עברית בשורה
       const hasHebrew = /[\u0590-\u05FF]/.test(str);
+      if (!hasHebrew) return { text: str, isRTL: false };
       
-      // אם אין עברית - החזר כמו שזה (אנגלית/מספרים בלבד)
-      if (!hasHebrew) {
-        return { text: str, isRTL: false };
-      }
-      
-      // בדיקה אם יש אנגלית בשורה
       const hasEnglish = /[a-zA-Z]/.test(str);
-      
-      // אם אין אנגלית - זו שורה עברית טהורה, פשוט להפוך
       if (!hasEnglish) {
+        // עברית בלבד - להפוך
         return { text: str.split('').reverse().join(''), isRTL: true };
       }
       
-      // שורה מעורבת - טיפול מיוחד
-      // מפצל לחלקים: עברית, רווחים, ולא-עברית
-      const parts = str.match(/[\u0590-\u05FF]+|[a-zA-Z0-9\.\,\:\;\!\?\+\-\*\/\=\(\)\[\]\{\}]+|\s+/g) || [str];
+      // שורה מעורבת
+      const parts = str.match(/[\u0590-\u05FF]+|\s+|[^\u0590-\u05FF\s]+/g);
       
-      // מעבד כל חלק
-      const processedParts = parts.map(part => {
-        if (/[\u0590-\u05FF]/.test(part)) {
-          // חלק עברי - להפוך
-          return part.split('').reverse().join('');
+      let hebrewEnd = 0;
+      for (let i = 0; i < parts.length; i++) {
+        if (/[a-zA-Z0-9]/.test(parts[i])) {
+          hebrewEnd = i;
+          break;
         }
-        // חלק אנגלי/מספרים/רווחים - להשאיר כמו שהוא
-        return part;
-      });
+      }
       
-      // להפוך את סדר החלקים (RTL)
-      return { text: processedParts.reverse().join(''), isRTL: true };
+      const hebrewPart = parts.slice(0, hebrewEnd).join('');
+      const englishPart = parts.slice(hebrewEnd).join('');
+      
+      return { text: englishPart + hebrewPart, isRTL: true };
     };
     
     // קבלת הדפים לייצוא
