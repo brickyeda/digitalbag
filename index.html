@@ -451,6 +451,12 @@
     #notebookContent {
       transform-origin: center;
       transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 100%;
+      padding: 20px 0;
     }
 
 /* Export Menu Styles */
@@ -2193,14 +2199,19 @@ padding: 0px 10px 10px 10px;
 
     /* Notebook Page Styles */
     .notebook-page {
-      min-height: 1200px;
+      /* A4 Size: 210mm × 297mm with aspect ratio 1:1.414 */
+      width: 100%;
+      max-width: 840px;
+      aspect-ratio: 210 / 297;
       background: white;
-      border-radius: 15px;
+      border-radius: 8px;
       box-shadow: 0 8px 25px var(--shadow-light);
       border: 1px solid var(--border-color);
-      margin-bottom: 30px;
+      margin: 30px auto;
       overflow: hidden;
       transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
     }
 
     .notebook-page.active-page {
@@ -2210,8 +2221,8 @@ padding: 0px 10px 10px 10px;
 
 .notebook-header {
   background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf0 100%);
-  padding: 10px 15px;
-  border-bottom: 3px solid #d0d7de;
+  padding: 15px 20px;
+  border-bottom: 2px solid #d0d7de;
   box-shadow: 
     0 2px 8px rgba(0,0,0,0.08),
     inset 0 1px 0 rgba(255,255,255,0.8);
@@ -2219,6 +2230,7 @@ padding: 0px 10px 10px 10px;
   justify-content: space-between;
   align-items: center;
   position: relative;
+  flex-shrink: 0;
 }
 
 .notebook-header::after {
@@ -2256,14 +2268,11 @@ padding: 0px 10px 10px 10px;
     /* דף שורות */
 .lined-page {
   position: relative;
-  min-height: 1100px;
+  flex: 1;
   background: #fefef8;
-  padding: 100px;  /* חזרה ל-padding רגיל */
-  box-shadow: 
-    inset 0 0 50px rgba(0,0,0,0.02),
-    0 10px 30px rgba(0,0,0,0.1);
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  padding: 50px 40px;  /* padding פרופורציוני ל-A4 */
+  display: flex;
+  flex-direction: column;
 }
 
 /* שוליים אדומים בצד */
@@ -2271,7 +2280,7 @@ padding: 0px 10px 10px 10px;
   content: '';
   position: absolute;
   top: 0;
-  right: 80px;  /* שנה מ-50px ל-80px */
+  right: 40px;
   width: 2px;
   height: 100%;
   background: #ff6b6b;
@@ -2281,42 +2290,19 @@ padding: 0px 10px 10px 10px;
 .lined-page::before {
   content: '';
   position: absolute;
-  top: 30px;
-  left: 30px;
-  right: 80px;
-  bottom: 30px;
+  top: 50px;
+  left: 40px;
+  right: 40px;
+  bottom: 50px;
   background-image: 
     repeating-linear-gradient(
       to bottom,
       transparent 0px,
-      transparent 44px,  /* שינוי */
-      #d4e2f0 44px,      /* שינוי */
-      #d4e2f0 45px       /* שינוי */
+      transparent 28px,
+      #d4e2f0 28px,
+      #d4e2f0 29px
     );
-  background-size: 100% 50px;  /* שינוי מ-30px ל-45px */
-  pointer-events: none;
-  z-index: 0;
-}
-
-.lined-page::before {
-  content: '';
-  position: absolute;
-  top: 30px;
-  left: 30px;
-  right: 80px;
-  bottom: 30px;
-  background-image: 
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 36px,    /* line-height פחות 9px */
-      #d4e2f0 40px,
-      #d4e2f0 37px,
-      transparent 37px,
-      transparent 45px     /* זה ה-line-height */
-    );
-  background-size: 100% 45px;
-  background-position: 0 20px;  /* <-- זה החדש! מזיז את הקווים למטה */
+  background-size: 100% 30px;
   pointer-events: none;
   z-index: 0;
 }
@@ -2376,21 +2362,18 @@ padding: 0px 10px 10px 10px;
 
 .grid-page {
   position: relative;
-  min-height: 1100px;
+  flex: 1;
   background: #f8fbff;
-  padding: 60px;
-  box-shadow: 
-    inset 0 0 50px rgba(0,0,0,0.02),
-    0 10px 30px rgba(0,0,0,0.1);
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
 }
 
 .grid-page::after {
   content: '';
   position: absolute;
   top: 0;
-  right: 40px;  /* התאם למרחק שרצית */
+  right: 40px;
   width: 2px;
   height: 100%;
   background: linear-gradient(to bottom, #ff6b6b 0%, #ff8787 100%);
@@ -2400,10 +2383,10 @@ padding: 0px 10px 10px 10px;
 .grid-page::before {
   content: '';
   position: absolute;
-  top: 30px;
-  left: 30px;
-  right: 40px;  /* זהה ל-right של הקו האדום */
-  bottom: 30px;
+  top: 40px;
+  left: 40px;
+  right: 40px;
+  bottom: 40px;
   background-image: 
     repeating-linear-gradient(
       to bottom,
@@ -2437,34 +2420,22 @@ padding: 0px 10px 10px 10px;
   pointer-events: none;
 }
 
-.grid-page::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 35px;
-  width: 2px;
-  height: 100%;
-  background: linear-gradient(to bottom, #ff6b6b 0%, #ff8787 100%);
-  opacity: 0.5;
-}
-
 .grid-textarea {
-  width: calc(100% - 70px);  /* התאם בדיוק ל-right של המשבצות */
-  height: 400px;
+  width: calc(100% - 40px);
   border: none;
   outline: none;
   background: transparent;
-  font-size: 1rem;
-  line-height: 1.4;
+  font-size: 0.95rem;
+  line-height: 1.6;
   color: var(--text-primary);
   font-family: 'Consolas', 'Monaco', monospace;
-  text-decoration: inherit; /* הוסף שורה זו */
   resize: none;
   position: relative;
   z-index: 1;
   padding: 0;
   margin: 0;
-  margin-right: 30px;  /* זהה למרחק הקו האדום מהקצה */
+  margin-right: 20px;
+  flex: 1;
 }
 
     .grid-textarea::placeholder {
@@ -2475,15 +2446,11 @@ padding: 0px 10px 10px 10px;
     /* דף חלק */
 .blank-page {
   position: relative;
-  min-height: 500px;
+  flex: 1;
   background: #fffef9;
-  padding: 30px;
-  box-shadow: 
-    inset 0 0 80px rgba(0,0,0,0.03),
-    0 10px 40px rgba(0,0,0,0.12),
-    0 2px 8px rgba(0,0,0,0.06);
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* טקסטורת נייר עדינה */
@@ -2500,24 +2467,7 @@ padding: 0px 10px 10px 10px;
     radial-gradient(circle at 80% 20%, rgba(0,0,0,0.01) 1px, transparent 1px);
   background-size: 50px 50px, 80px 80px, 60px 60px;
   pointer-events: none;
-  border-radius: 8px;
 }
-
-    .blank-page::before {
-      content: '';
-      position: absolute;
-      top: 30px;
-      left: 30px;
-      right: 30px;
-      bottom: 30px;
-      background-image: 
-        linear-gradient(to bottom, var(--line-color) 0px, var(--line-color) 1px, transparent 1px),
-        linear-gradient(to right, var(--line-color) 0px, var(--line-color) 1px, transparent 1px),
-        linear-gradient(to bottom, transparent calc(100% - 1px), var(--line-color) calc(100% - 1px)),
-        linear-gradient(to right, transparent calc(100% - 1px), var(--line-color) calc(100% - 1px));
-      background-size: 100% 1px, 1px 100%, 100% 1px, 1px 100%;
-      background-position: 0 0, 0 0, 0 100%, 100% 0;
-      background-repeat: no-repeat;
       pointer-events: none;
     }
 
@@ -3349,19 +3299,21 @@ background: rgba(24, 9, 236, 0.9);
     /* Enhanced textarea with rich formatting support */
     .enhanced-textarea {
       width: 100%;
-      height: 1100px;
+      height: auto;
+      min-height: 300px;
       border: none;
       outline: none;
       background: transparent;
-      font-size: 1.1rem;
+      font-size: 1rem;
       line-height: 1.6;
       color: var(--text-primary);
       font-family: 'Arial', sans-serif;
-      resize: none;
+      resize: vertical;
       position: relative;
       z-index: 1;
       padding: 0;
       margin: 0;
+      flex: 1;
     }
 
     /* Formatting classes for rich text */
@@ -5729,6 +5681,89 @@ height: 100%;
 }
 
 .interactive-shape.selected .shape-rotate-line { display: block; }
+
+  /* A4 Print Styles */
+  @media print {
+    /* Hide all non-printable elements */
+    .navbar,
+    .page-container,
+    .navbar-item,
+    .settings-icon,
+    .fullscreen-icon,
+    .logout-btn,
+    .notebook-delete-btn,
+    .delete-page-btn,
+    .add-page-btn,
+    .export-btn,
+    .zoom-controls,
+    #galleryControls,
+    .tool-btn,
+    #inPageToolbar,
+    #mathFormulasToolbar,
+    .notebook-header {
+      display: none !important;
+    }
+
+    /* Body and page setup */
+    body {
+      zoom: 1 !important;
+      -moz-transform: none !important;
+      -moz-transform-origin: none !important;
+      background: white;
+    }
+
+    /* A4 Page printing */
+    .notebook-page {
+      max-width: 100%;
+      width: 210mm;
+      height: 297mm;
+      margin: 0;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+      page-break-after: always;
+      page-break-inside: avoid;
+    }
+
+    /* Page content */
+    .lined-page,
+    .grid-page,
+    .blank-page {
+      margin: 0;
+      padding: 20mm;
+      height: 257mm;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    /* Textarea for printing */
+    .enhanced-textarea,
+    .grid-textarea,
+    .blank-textarea {
+      height: auto !important;
+      width: 100% !important;
+      color: black;
+      font-size: 11pt;
+      line-height: 1.4;
+    }
+
+    /* Preserve backgrounds and patterns for print */
+    .lined-page::before,
+    .grid-page::before,
+    .blank-page::before {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .lined-page::after,
+    .grid-page::after,
+    .blank-page::after {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
 
   </style>
 </head>
