@@ -8826,76 +8826,15 @@ style="position: sticky !important;"
   if (pageData.formulas && pageData.formulas.length > 0) {
     setTimeout(() => {
       const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-      pageData.formulas.forEach(f => {
-        this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
-      });
-    }, 100);
+      if (pageContainer) {
+        pageData.formulas.forEach(f => {
+          this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
+        });
+      }
+    }, 150);
   }
      
 // טעינת ציור שמור
-if (pageData.drawing) {
-  setTimeout(() => {
-    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-    if (pageContainer) {
-      let canvas = pageContainer.querySelector('.page-canvas');
-      if (!canvas) {
-        canvas = document.createElement('canvas');
-        canvas.className = 'page-canvas';
-        pageContainer.appendChild(canvas);
-        canvas.width = pageContainer.offsetWidth;
-        canvas.height = pageContainer.offsetHeight;
-      }
-      
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0);
-        
-        // חיבור מחדש לאירועי ציור אם מצב הציור פעיל
-        if (app.drawing.isDrawingModeActive) {
-          canvas.classList.add('drawing-active');
-          canvas.style.pointerEvents = 'auto';
-          app.drawing.attachCanvasEvents(canvas);
-        }
-      };
-      img.src = pageData.drawing;
-    }
-  }, 200);
-}
-
-// טעינת צורות אינטראקטיביות שמורות
-if (pageData.interactiveShapes && pageData.interactiveShapes.length > 0) {
-  setTimeout(() => {
-    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-    if (pageContainer) {
-      pageData.interactiveShapes.forEach(shapeData => {
-        app.interactiveShapes.loadShape(pageContainer, shapeData, index);
-      });
-    }
-  }, 250);
-}
-
-// טעינת נוסחאות שמורות
-if (pageData.formulas && pageData.formulas.length > 0) {
-  setTimeout(() => {
-    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-    if (pageContainer) {
-      pageData.formulas.forEach(f => {
-        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
-      });
-    }
-  }, 100);
-}// טעינת נוסחאות שמורות
-if (pageData.formulas && pageData.formulas.length > 0) {
-  setTimeout(() => {
-    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-    if (pageContainer) {
-      pageData.formulas.forEach(f => {
-        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
-      });
-    }
-  }, 100);
-}
 
         return pageDiv;
       },
@@ -10430,16 +10369,18 @@ async exportNotebookToPDF() {
     for (let pageIdx = 0; pageIdx < pageElements.length; pageIdx++) {
       const pageEl = pageElements[pageIdx];
       
-      // בדוק אם יש ציורים או צורות בדף
+      // בדוק אם יש ציורים, צורות, או נוסחאות בדף
       const hasDrawings = pageEl.querySelector('canvas') || pageEl.querySelector('.interactive-shape') || pageEl.querySelector('.draggable-image');
+      const hasFormulas = pageEl.querySelector('.dropped-formula');
       
-      if (hasDrawings) {
-        // אם יש ציורים או צורות - ייצוא משולב
+      if (hasDrawings || hasFormulas) {
+        // אם יש ציורים, צורות או נוסחאות - ייצוא משולב
         try {
+          const extraMsg = hasFormulas && !hasDrawings ? 'עם נוסחאות' : 'עם ציורים';
           loadingMessage.innerHTML = `
             <div style="margin-bottom: 15px;">📄</div>
             <div>יוצר PDF...</div>
-            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">מייצא דף ${pageIdx + 1} עם ציורים...</div>
+            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">מייצא דף ${pageIdx + 1} ${extraMsg}...</div>
           `;
           
           if (!isFirstPdfPage) {
@@ -10517,6 +10458,37 @@ async exportNotebookToPDF() {
             
             const imgData = shapeCanvas.toDataURL('image/png');
             pdf.addImage(imgData, 'PNG', shapeX, shapeY, shapeW, shapeH);
+          }
+
+          // ייצוא נוסחאות
+          const formulas = pageEl.querySelectorAll('.dropped-formula');
+          for (const formula of formulas) {
+            try {
+              const formulaRect = formula.getBoundingClientRect();
+              
+              // חישוב מיקום ביחס לדף
+              const xPercent = (formulaRect.left - pageRect.left) / pageRect.width;
+              const yPercent = (formulaRect.top - pageRect.top) / pageRect.height;
+              
+              const formulaX = xPercent * pageWidth;
+              const formulaY = yPercent * pageHeight;
+              
+              // קבלת טקסט הנוסחה
+              const formulaText = formula.textContent.replace('×', '').trim();
+              
+              // ציור תיבה ליד הנוסחה
+              pdf.setDrawColor(243, 156, 18);
+              pdf.setLineWidth(0.5);
+              pdf.rect(formulaX - 2, formulaY - 2, formulaText.length * 1.5 + 4, 6, '');
+              
+              // כתיבת הנוסחה
+              pdf.setFont('Rubik');
+              pdf.setFontSize(10);
+              pdf.setTextColor(50, 50, 50);
+              pdf.text(formulaText, formulaX, formulaY + 3, { align: 'left' });
+            } catch (e) {
+              console.warn('שגיאה בייצוא נוסחה:', e);
+            }
           }
           
           // טקסט
@@ -11800,7 +11772,16 @@ insertImage() {
           if (dataToLoad) {
             Object.keys(dataToLoad).forEach(key => {
               if (this.subjects[key]) {
+                // העתק את כל המידע כולל pages, formulas וכל אלמנט אחר
                 this.subjects[key].pages = dataToLoad[key].pages || this.subjects[key].pages;
+                // וודא שformulas גם נטענות
+                if (dataToLoad[key].pages) {
+                  dataToLoad[key].pages.forEach((page, idx) => {
+                    if (page.formulas) {
+                      this.subjects[key].pages[idx].formulas = page.formulas;
+                    }
+                  });
+                }
               } else {
                 this.subjects[key] = dataToLoad[key];
               }
