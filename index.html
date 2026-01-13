@@ -8789,19 +8789,78 @@ style="position: sticky !important;"
         `;
    
   if (pageData.formulas && pageData.formulas.length > 0) {
-    console.log(`📐 דף ${index}: ${pageData.formulas.length} נוסחאות לטעינה`);
     setTimeout(() => {
       const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-      if (pageContainer) {
-        pageData.formulas.forEach((f, i) => {
-          console.log(`  [${i}] טוען: "${f.text}" @ ${f.x}, ${f.y}`);
-          this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
-        });
-      }
+      pageData.formulas.forEach(f => {
+        this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
+      });
     }, 100);
   }
      
 // טעינת ציור שמור
+if (pageData.drawing) {
+  setTimeout(() => {
+    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
+    if (pageContainer) {
+      let canvas = pageContainer.querySelector('.page-canvas');
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.className = 'page-canvas';
+        pageContainer.appendChild(canvas);
+        canvas.width = pageContainer.offsetWidth;
+        canvas.height = pageContainer.offsetHeight;
+      }
+      
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+        
+        // חיבור מחדש לאירועי ציור אם מצב הציור פעיל
+        if (app.drawing.isDrawingModeActive) {
+          canvas.classList.add('drawing-active');
+          canvas.style.pointerEvents = 'auto';
+          app.drawing.attachCanvasEvents(canvas);
+        }
+      };
+      img.src = pageData.drawing;
+    }
+  }, 200);
+}
+
+// טעינת צורות אינטראקטיביות שמורות
+if (pageData.interactiveShapes && pageData.interactiveShapes.length > 0) {
+  setTimeout(() => {
+    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
+    if (pageContainer) {
+      pageData.interactiveShapes.forEach(shapeData => {
+        app.interactiveShapes.loadShape(pageContainer, shapeData, index);
+      });
+    }
+  }, 250);
+}
+
+// טעינת נוסחאות שמורות
+if (pageData.formulas && pageData.formulas.length > 0) {
+  setTimeout(() => {
+    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
+    if (pageContainer) {
+      pageData.formulas.forEach(f => {
+        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
+      });
+    }
+  }, 100);
+}// טעינת נוסחאות שמורות
+if (pageData.formulas && pageData.formulas.length > 0) {
+  setTimeout(() => {
+    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
+    if (pageContainer) {
+      pageData.formulas.forEach(f => {
+        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
+      });
+    }
+  }, 100);
+}
 
         return pageDiv;
       },
@@ -8939,11 +8998,11 @@ saveCurrentNotebookDrawings() {
       this.subjects[this.currentNotebook].pages[index].interactiveShapes = shapes;
     }
     
-    // שמירת נוסחאות
+    // שמירת נוסחאות - זה החשוב!
     const formulas = [];
     pageContainer.querySelectorAll('.dropped-formula').forEach(formula => {
       formulas.push({
-        text: formula.textContent,
+        text: formula.textContent.replace('×', ''),
         x: formula.style.left,
         y: formula.style.top
       });
@@ -8951,6 +9010,7 @@ saveCurrentNotebookDrawings() {
     
     if (formulas.length > 0) {
       this.subjects[this.currentNotebook].pages[index].formulas = formulas;
+      console.log(`✅ דף ${index}: ${formulas.length} נוסחאות שמורות`);
     }
   });
   
@@ -9186,17 +9246,11 @@ makeFormulaDraggable(formulaDiv, pageIndex) {
 },
 
 saveFormulaPositions(pageIndex) {
-  if (!app.currentNotebook) {
-    console.warn('❌ אין מחברת פעילה');
-    return;
-  }
+  if (!app.currentNotebook) return;
   
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   const pageContainer = pages[pageIndex];
-  if (!pageContainer) {
-    console.warn('❌ לא מצאתי pageContainer בindex:', pageIndex);
-    return;
-  }
+  if (!pageContainer) return;
   
   const formulas = [];
   pageContainer.querySelectorAll('.dropped-formula').forEach(formula => {
@@ -9207,19 +9261,10 @@ saveFormulaPositions(pageIndex) {
     });
   });
   
-  console.log('💾 saveFormulaPositions:', formulas);
-  
   // שמירה במבנה הנתונים
   if (app.subjects[app.currentNotebook].pages[pageIndex]) {
     app.subjects[app.currentNotebook].pages[pageIndex].formulas = formulas;
-    console.log('✅ שמורו בנתונים - עכשיו קוראים ל-saveNotebookData');
-    
-    // שמור עם logging
-    app.saveNotebookData().catch(err => {
-      console.error('❌ בעיה ב-saveNotebookData:', err);
-    });
-  } else {
-    console.warn('❌ עמוד לא קיים:', pageIndex);
+    app.saveNotebookData();
   }
 },
 
@@ -11684,21 +11729,13 @@ insertImage() {
       // שמירת נתוני מחברות
       saveNotebookData: async function() {
         try {
-          console.log('💾 saveNotebookData - שומר את כל הנתונים');
-          
           // שמירה ב-localStorage (תמיד)
           localStorage.setItem('notebookData', JSON.stringify(this.subjects));
-          console.log('✅ שמור ב-localStorage');
           
           // שמירה ב-Supabase (אם זמין)
-          try {
-            await saveToSupabase('notebook_data', this.subjects);
-            console.log('✅ שמור ב-Supabase');
-          } catch (supabaseError) {
-            console.warn('⚠️ Supabase לא זמין:', supabaseError.message);
-          }
+          await saveToSupabase('notebook_data', this.subjects);
         } catch (error) {
-          console.error('❌ שגיאה בשמירת נתונים:', error);
+          console.error('שגיאה בשמירת נתונים:', error);
         }
       },
 
@@ -11728,28 +11765,15 @@ insertImage() {
           // טען את הנתונים
           if (dataToLoad) {
             Object.keys(dataToLoad).forEach(key => {
-              console.log('🔄 טוען מחברת:', key);
               if (this.subjects[key]) {
-                // העתק pages
                 this.subjects[key].pages = dataToLoad[key].pages || this.subjects[key].pages;
-                
-                // וודא שformulas נטענות
-                if (dataToLoad[key].pages) {
-                  dataToLoad[key].pages.forEach((page, idx) => {
-                    if (page.formulas && page.formulas.length > 0) {
-                      this.subjects[key].pages[idx].formulas = page.formulas;
-                      console.log(`  ✅ דף ${idx} - ${page.formulas.length} נוסחאות`);
-                    }
-                  });
-                }
               } else {
                 this.subjects[key] = dataToLoad[key];
               }
             });
           }
-          console.log('✅ טעינה הסתיימה');
         } catch (error) {
-          console.error('❌ שגיאה בטעינת נתונים:', error);
+          console.error('שגיאה בטעינת נתונים:', error);
         }
       },
 
