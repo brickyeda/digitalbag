@@ -8998,11 +8998,11 @@ saveCurrentNotebookDrawings() {
       this.subjects[this.currentNotebook].pages[index].interactiveShapes = shapes;
     }
     
-    // שמירת נוסחאות - זה החשוב!
+    // שמירת נוסחאות
     const formulas = [];
     pageContainer.querySelectorAll('.dropped-formula').forEach(formula => {
       formulas.push({
-        text: formula.textContent.replace('×', ''),
+        text: formula.textContent,
         x: formula.style.left,
         y: formula.style.top
       });
@@ -9010,7 +9010,6 @@ saveCurrentNotebookDrawings() {
     
     if (formulas.length > 0) {
       this.subjects[this.currentNotebook].pages[index].formulas = formulas;
-      console.log(`✅ דף ${index}: ${formulas.length} נוסחאות שמורות`);
     }
   });
   
