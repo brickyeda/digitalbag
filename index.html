@@ -8824,12 +8824,17 @@ style="position: sticky !important;"
         `;
    
   if (pageData.formulas && pageData.formulas.length > 0) {
+    console.log(`📐 דף ${index}: ${pageData.formulas.length} נוסחאות לטעינה`, pageData.formulas);
     setTimeout(() => {
       const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
       if (pageContainer) {
-        pageData.formulas.forEach(f => {
+        pageData.formulas.forEach((f, i) => {
+          console.log(`  [${i}] טוען: "${f.text}" @ ${f.x}, ${f.y}`);
           this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
         });
+        console.log(`✅ הסתיימה טעינת נוסחאות לדף ${index}`);
+      } else {
+        console.error(`❌ לא מצאתי pageContainer לדף ${index}`);
       }
     }, 150);
   }
@@ -9221,23 +9226,41 @@ makeFormulaDraggable(formulaDiv, pageIndex) {
 saveFormulaPositions(pageIndex) {
   if (!app.currentNotebook) return;
   
+  console.log('🔍 saveFormulaPositions קרא לי עם pageIndex:', pageIndex);
+  
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   const pageContainer = pages[pageIndex];
-  if (!pageContainer) return;
+  if (!pageContainer) {
+    console.error('❌ לא מצאתי את pageContainer בindex:', pageIndex);
+    return;
+  }
   
   const formulas = [];
-  pageContainer.querySelectorAll('.dropped-formula').forEach(formula => {
-    formulas.push({
+  pageContainer.querySelectorAll('.dropped-formula').forEach((formula, i) => {
+    const formulaData = {
       text: formula.textContent.replace('×', ''), // הסרת כפתור ה-X
       x: formula.style.left,
       y: formula.style.top
-    });
+    };
+    formulas.push(formulaData);
+    console.log(`  [${i}] נוסחה: "${formulaData.text}" @ ${formulaData.x}, ${formulaData.y}`);
   });
+  
+  console.log(`💾 סה"כ ${formulas.length} נוסחאות למחברת "${app.currentNotebook}" דף ${pageIndex}`);
   
   // שמירה במבנה הנתונים
   if (app.subjects[app.currentNotebook].pages[pageIndex]) {
     app.subjects[app.currentNotebook].pages[pageIndex].formulas = formulas;
-    app.saveNotebookData();
+    console.log('✅ שמורו בנתונים:', app.subjects[app.currentNotebook].pages[pageIndex].formulas);
+    
+    // שמירה ל-localStorage ו-Supabase עם await
+    app.saveNotebookData().then(() => {
+      console.log('✅ saveNotebookData הסתיים בהצלחה!');
+    }).catch((err) => {
+      console.error('❌ שגיאה ב-saveNotebookData:', err);
+    });
+  } else {
+    console.error('❌ עמוד לא קיים:', pageIndex);
   }
 },
 
@@ -11735,13 +11758,22 @@ insertImage() {
       // שמירת נתוני מחברות
       saveNotebookData: async function() {
         try {
+          console.log('💾 saveNotebookData - מתחיל שמירה...');
+          console.log('📊 subjects שמחברות:', JSON.stringify(this.subjects, null, 2));
+          
           // שמירה ב-localStorage (תמיד)
           localStorage.setItem('notebookData', JSON.stringify(this.subjects));
+          console.log('✅ שמור ב-localStorage בהצלחה');
           
           // שמירה ב-Supabase (אם זמין)
-          await saveToSupabase('notebook_data', this.subjects);
+          const result = await saveToSupabase('notebook_data', this.subjects);
+          if (result.success) {
+            console.log('✅ שמור ב-Supabase בהצלחה');
+          } else {
+            console.warn('⚠️ בעיה בשמירה ל-Supabase:', result.error);
+          }
         } catch (error) {
-          console.error('שגיאה בשמירת נתונים:', error);
+          console.error('❌ שגיאה בשמירת נתונים:', error);
         }
       },
 
@@ -11758,27 +11790,30 @@ insertImage() {
           if (cloudData) {
             // יש נתונים בענן - השתמש בהם
             console.log('✅ נטען מהענן - מחברות');
+            console.log('📊 cloudData:', JSON.stringify(cloudData, null, 2));
             dataToLoad = cloudData;
             // שמור גם ב-localStorage כגיבוי
             localStorage.setItem('notebookData', JSON.stringify(cloudData));
           } else {
             // אין נתונים בענן
             console.log('⚠️ אין נתונים בענן - התחל ריק');
-            // אל תטען מ-localStorage - זה עשוי להיות של משתמש אחר!
             dataToLoad = null;
           }
           
           // טען את הנתונים
           if (dataToLoad) {
             Object.keys(dataToLoad).forEach(key => {
+              console.log(`🔄 טוען מחברת: ${key}`);
               if (this.subjects[key]) {
                 // העתק את כל המידע כולל pages, formulas וכל אלמנט אחר
                 this.subjects[key].pages = dataToLoad[key].pages || this.subjects[key].pages;
+                
                 // וודא שformulas גם נטענות
                 if (dataToLoad[key].pages) {
                   dataToLoad[key].pages.forEach((page, idx) => {
-                    if (page.formulas) {
+                    if (page.formulas && page.formulas.length > 0) {
                       this.subjects[key].pages[idx].formulas = page.formulas;
+                      console.log(`  ✅ דף ${idx} - ${page.formulas.length} נוסחאות טעונות`);
                     }
                   });
                 }
@@ -11787,8 +11822,9 @@ insertImage() {
               }
             });
           }
+          console.log('✅ טעינה הסתיימה');
         } catch (error) {
-          console.error('שגיאה בטעינת נתונים:', error);
+          console.error('❌ שגיאה בטעינת נתונים:', error);
         }
       },
 
