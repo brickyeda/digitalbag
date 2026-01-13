@@ -451,12 +451,6 @@
     #notebookContent {
       transform-origin: center;
       transition: transform 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      max-width: 100%;
-      padding: 20px 0;
     }
 
 /* Export Menu Styles */
@@ -2199,19 +2193,14 @@ padding: 0px 10px 10px 10px;
 
     /* Notebook Page Styles */
     .notebook-page {
-      /* A4 Size: 210mm × 297mm with aspect ratio 1:1.414 */
-      width: 100%;
-      max-width: 840px;
-      aspect-ratio: 210 / 297;
+      min-height: 1200px;
       background: white;
-      border-radius: 8px;
+      border-radius: 15px;
       box-shadow: 0 8px 25px var(--shadow-light);
       border: 1px solid var(--border-color);
-      margin: 30px auto;
+      margin-bottom: 30px;
       overflow: hidden;
       transition: all 0.3s ease;
-      display: flex;
-      flex-direction: column;
     }
 
     .notebook-page.active-page {
@@ -2221,8 +2210,8 @@ padding: 0px 10px 10px 10px;
 
 .notebook-header {
   background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf0 100%);
-  padding: 15px 20px;
-  border-bottom: 2px solid #d0d7de;
+  padding: 10px 15px;
+  border-bottom: 3px solid #d0d7de;
   box-shadow: 
     0 2px 8px rgba(0,0,0,0.08),
     inset 0 1px 0 rgba(255,255,255,0.8);
@@ -2230,7 +2219,6 @@ padding: 0px 10px 10px 10px;
   justify-content: space-between;
   align-items: center;
   position: relative;
-  flex-shrink: 0;
 }
 
 .notebook-header::after {
@@ -2268,11 +2256,14 @@ padding: 0px 10px 10px 10px;
     /* דף שורות */
 .lined-page {
   position: relative;
-  flex: 1;
+  min-height: 1100px;
   background: #fefef8;
-  padding: 50px 40px;  /* padding פרופורציוני ל-A4 */
-  display: flex;
-  flex-direction: column;
+  padding: 100px;  /* חזרה ל-padding רגיל */
+  box-shadow: 
+    inset 0 0 50px rgba(0,0,0,0.02),
+    0 10px 30px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 /* שוליים אדומים בצד */
@@ -2280,7 +2271,7 @@ padding: 0px 10px 10px 10px;
   content: '';
   position: absolute;
   top: 0;
-  right: 40px;
+  right: 80px;  /* שנה מ-50px ל-80px */
   width: 2px;
   height: 100%;
   background: #ff6b6b;
@@ -2290,19 +2281,42 @@ padding: 0px 10px 10px 10px;
 .lined-page::before {
   content: '';
   position: absolute;
-  top: 50px;
-  left: 40px;
-  right: 40px;
-  bottom: 50px;
+  top: 30px;
+  left: 30px;
+  right: 80px;
+  bottom: 30px;
   background-image: 
     repeating-linear-gradient(
       to bottom,
       transparent 0px,
-      transparent 28px,
-      #d4e2f0 28px,
-      #d4e2f0 29px
+      transparent 44px,  /* שינוי */
+      #d4e2f0 44px,      /* שינוי */
+      #d4e2f0 45px       /* שינוי */
     );
-  background-size: 100% 30px;
+  background-size: 100% 50px;  /* שינוי מ-30px ל-45px */
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lined-page::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  right: 80px;
+  bottom: 30px;
+  background-image: 
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 36px,    /* line-height פחות 9px */
+      #d4e2f0 40px,
+      #d4e2f0 37px,
+      transparent 37px,
+      transparent 45px     /* זה ה-line-height */
+    );
+  background-size: 100% 45px;
+  background-position: 0 20px;  /* <-- זה החדש! מזיז את הקווים למטה */
   pointer-events: none;
   z-index: 0;
 }
@@ -2362,18 +2376,21 @@ padding: 0px 10px 10px 10px;
 
 .grid-page {
   position: relative;
-  flex: 1;
+  min-height: 1100px;
   background: #f8fbff;
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
+  padding: 60px;
+  box-shadow: 
+    inset 0 0 50px rgba(0,0,0,0.02),
+    0 10px 30px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 .grid-page::after {
   content: '';
   position: absolute;
   top: 0;
-  right: 40px;
+  right: 40px;  /* התאם למרחק שרצית */
   width: 2px;
   height: 100%;
   background: linear-gradient(to bottom, #ff6b6b 0%, #ff8787 100%);
@@ -2383,10 +2400,10 @@ padding: 0px 10px 10px 10px;
 .grid-page::before {
   content: '';
   position: absolute;
-  top: 40px;
-  left: 40px;
-  right: 40px;
-  bottom: 40px;
+  top: 30px;
+  left: 30px;
+  right: 40px;  /* זהה ל-right של הקו האדום */
+  bottom: 30px;
   background-image: 
     repeating-linear-gradient(
       to bottom,
@@ -2420,22 +2437,34 @@ padding: 0px 10px 10px 10px;
   pointer-events: none;
 }
 
+.grid-page::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 35px;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom, #ff6b6b 0%, #ff8787 100%);
+  opacity: 0.5;
+}
+
 .grid-textarea {
-  width: calc(100% - 40px);
+  width: calc(100% - 70px);  /* התאם בדיוק ל-right של המשבצות */
+  height: 400px;
   border: none;
   outline: none;
   background: transparent;
-  font-size: 0.95rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.4;
   color: var(--text-primary);
   font-family: 'Consolas', 'Monaco', monospace;
+  text-decoration: inherit; /* הוסף שורה זו */
   resize: none;
   position: relative;
   z-index: 1;
   padding: 0;
   margin: 0;
-  margin-right: 20px;
-  flex: 1;
+  margin-right: 30px;  /* זהה למרחק הקו האדום מהקצה */
 }
 
     .grid-textarea::placeholder {
@@ -2446,11 +2475,15 @@ padding: 0px 10px 10px 10px;
     /* דף חלק */
 .blank-page {
   position: relative;
-  flex: 1;
+  min-height: 500px;
   background: #fffef9;
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
+  padding: 30px;
+  box-shadow: 
+    inset 0 0 80px rgba(0,0,0,0.03),
+    0 10px 40px rgba(0,0,0,0.12),
+    0 2px 8px rgba(0,0,0,0.06);
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
 }
 
 /* טקסטורת נייר עדינה */
@@ -2467,7 +2500,24 @@ padding: 0px 10px 10px 10px;
     radial-gradient(circle at 80% 20%, rgba(0,0,0,0.01) 1px, transparent 1px);
   background-size: 50px 50px, 80px 80px, 60px 60px;
   pointer-events: none;
+  border-radius: 8px;
 }
+
+    .blank-page::before {
+      content: '';
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      right: 30px;
+      bottom: 30px;
+      background-image: 
+        linear-gradient(to bottom, var(--line-color) 0px, var(--line-color) 1px, transparent 1px),
+        linear-gradient(to right, var(--line-color) 0px, var(--line-color) 1px, transparent 1px),
+        linear-gradient(to bottom, transparent calc(100% - 1px), var(--line-color) calc(100% - 1px)),
+        linear-gradient(to right, transparent calc(100% - 1px), var(--line-color) calc(100% - 1px));
+      background-size: 100% 1px, 1px 100%, 100% 1px, 1px 100%;
+      background-position: 0 0, 0 0, 0 100%, 100% 0;
+      background-repeat: no-repeat;
       pointer-events: none;
     }
 
@@ -3299,21 +3349,19 @@ background: rgba(24, 9, 236, 0.9);
     /* Enhanced textarea with rich formatting support */
     .enhanced-textarea {
       width: 100%;
-      height: auto;
-      min-height: 300px;
+      height: 1100px;
       border: none;
       outline: none;
       background: transparent;
-      font-size: 1rem;
+      font-size: 1.1rem;
       line-height: 1.6;
       color: var(--text-primary);
       font-family: 'Arial', sans-serif;
-      resize: vertical;
+      resize: none;
       position: relative;
       z-index: 1;
       padding: 0;
       margin: 0;
-      flex: 1;
     }
 
     /* Formatting classes for rich text */
@@ -5681,89 +5729,6 @@ height: 100%;
 }
 
 .interactive-shape.selected .shape-rotate-line { display: block; }
-
-  /* A4 Print Styles */
-  @media print {
-    /* Hide all non-printable elements */
-    .navbar,
-    .page-container,
-    .navbar-item,
-    .settings-icon,
-    .fullscreen-icon,
-    .logout-btn,
-    .notebook-delete-btn,
-    .delete-page-btn,
-    .add-page-btn,
-    .export-btn,
-    .zoom-controls,
-    #galleryControls,
-    .tool-btn,
-    #inPageToolbar,
-    #mathFormulasToolbar,
-    .notebook-header {
-      display: none !important;
-    }
-
-    /* Body and page setup */
-    body {
-      zoom: 1 !important;
-      -moz-transform: none !important;
-      -moz-transform-origin: none !important;
-      background: white;
-    }
-
-    /* A4 Page printing */
-    .notebook-page {
-      max-width: 100%;
-      width: 210mm;
-      height: 297mm;
-      margin: 0;
-      padding: 0;
-      border: none;
-      box-shadow: none;
-      border-radius: 0;
-      page-break-after: always;
-      page-break-inside: avoid;
-    }
-
-    /* Page content */
-    .lined-page,
-    .grid-page,
-    .blank-page {
-      margin: 0;
-      padding: 20mm;
-      height: 257mm;
-      border: none;
-      border-radius: 0;
-      box-shadow: none;
-    }
-
-    /* Textarea for printing */
-    .enhanced-textarea,
-    .grid-textarea,
-    .blank-textarea {
-      height: auto !important;
-      width: 100% !important;
-      color: black;
-      font-size: 11pt;
-      line-height: 1.4;
-    }
-
-    /* Preserve backgrounds and patterns for print */
-    .lined-page::before,
-    .grid-page::before,
-    .blank-page::before {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-
-    .lined-page::after,
-    .grid-page::after,
-    .blank-page::after {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-  }
 
   </style>
 </head>
@@ -8385,11 +8350,7 @@ this.showPage('homepage');
        
 // שמור ציורים לפני מעבר לדף אחר
 if (this.currentNotebook && pageId !== 'notebookView') {
-  this.saveCurrentNotebookDrawings().then(() => {
-    console.log('✅ ציורים שמורים לפני מעבר');
-  }).catch((err) => {
-    console.error('❌ בעיה בשמירת ציורים:', err);
-  });
+  this.saveCurrentNotebookDrawings();
 }
  
         // הסתר את כל הדפים
@@ -8433,17 +8394,10 @@ if (this.currentNotebook && pageId !== 'notebookView') {
 } else if (pageId === 'notebooks') {
   // שמור ציורים לפני יציאה מהמחברת
   if (this.currentNotebook) {
-    this.saveCurrentNotebookDrawings().then(() => {
-      console.log('✅ ציורים שמורים לפני חזרה לתצוגת מחברות');
-      this.renderNotebooks();
-    }).catch((err) => {
-      console.error('❌ בעיה בשמירת ציורים:', err);
-      this.renderNotebooks();
-    });
-  } else {
-    this.renderNotebooks();
+    this.saveCurrentNotebookDrawings();
   }
-}
+  this.renderNotebooks();
+        }
         
         // בדיקה והפעלת טוטוריאל
         if (typeof TutorialSystem !== 'undefined') {
@@ -8835,7 +8789,7 @@ style="position: sticky !important;"
         `;
    
   if (pageData.formulas && pageData.formulas.length > 0) {
-    console.log(`📐 דף ${index}: ${pageData.formulas.length} נוסחאות לטעינה`, pageData.formulas);
+    console.log(`📐 דף ${index}: ${pageData.formulas.length} נוסחאות לטעינה`);
     setTimeout(() => {
       const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
       if (pageContainer) {
@@ -8843,11 +8797,8 @@ style="position: sticky !important;"
           console.log(`  [${i}] טוען: "${f.text}" @ ${f.x}, ${f.y}`);
           this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
         });
-        console.log(`✅ הסתיימה טעינת נוסחאות לדף ${index}`);
-      } else {
-        console.error(`❌ לא מצאתי pageContainer לדף ${index}`);
       }
-    }, 150);
+    }, 100);
   }
      
 // טעינת ציור שמור
@@ -8948,10 +8899,8 @@ savePage(pageIndex, content) {
 },
 
 // שמירת כל הציורים והנוסחאות של המחברת הנוכחית
-async saveCurrentNotebookDrawings() {
+saveCurrentNotebookDrawings() {
   if (!this.currentNotebook) return;
-  
-  console.log('💾 saveCurrentNotebookDrawings - שומר ציורים וצורות');
   
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   pages.forEach((pageContainer, index) => {
@@ -9002,12 +8951,10 @@ async saveCurrentNotebookDrawings() {
     
     if (formulas.length > 0) {
       this.subjects[this.currentNotebook].pages[index].formulas = formulas;
-      console.log(`  דף ${index}: ${formulas.length} נוסחאות שמורות`);
     }
   });
   
-  await this.saveNotebookData();
-  console.log('✅ saveCurrentNotebookDrawings הסתיים');
+  this.saveNotebookData();
 },
 
 // גרירת נוסחה
@@ -9099,8 +9046,8 @@ deleteBtn.onclick = function(e) {
   };
   
   // שמור שינויים בזמן עריכה
-  formulaDiv.oninput = async function() {
-    await app.saveFormulaPositions(pageIndex);
+  formulaDiv.oninput = function() {
+    app.saveFormulaPositions(pageIndex);
   };
   
   // גרירה מתוקנת
@@ -9174,26 +9121,26 @@ deleteBtn.onclick = function(e) {
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);  
 // שמירה אוטומטית כשמוסיפים נוסחה
-formulaDiv.addEventListener('mouseup', async () => {
+formulaDiv.addEventListener('mouseup', () => {
   // מצא את אינדקס הדף
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   const pageIndex = Array.from(pages).indexOf(container);
   if (pageIndex !== -1) {
-    setTimeout(async () => await app.saveFormulaPositions(pageIndex), 100);
+    setTimeout(() => app.saveFormulaPositions(pageIndex), 100);
   }
 });
 
 // שמירה גם כשמסיימים לערוך את הטקסט
-formulaDiv.addEventListener('blur', async () => {
+formulaDiv.addEventListener('blur', () => {
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   const pageIndex = Array.from(pages).indexOf(container);
   if (pageIndex !== -1) {
-    await app.saveFormulaPositions(pageIndex);
+    app.saveFormulaPositions(pageIndex);
   }
 });
 
   container.appendChild(formulaDiv);
-  await this.saveFormulaPositions(pageIndex);
+  this.saveFormulaPositions(pageIndex);
 },
 
 makeFormulaDraggable(formulaDiv, pageIndex) {
@@ -9229,57 +9176,50 @@ makeFormulaDraggable(formulaDiv, pageIndex) {
     formulaDiv.style.top = y + 'px';
   };
   
-  document.onmouseup = async function() {
+  document.onmouseup = function() {
     if (isDragging) {
       isDragging = false;
       formulaDiv.style.cursor = 'move';
-      await app.saveFormulaPositions(pageIndex);
+      app.saveFormulaPositions(pageIndex);
     }
   };
 },
 
-async saveFormulaPositions(pageIndex) {
+saveFormulaPositions(pageIndex) {
   if (!app.currentNotebook) {
-    console.error('❌ אין מחברת פעילה');
+    console.warn('❌ אין מחברת פעילה');
     return;
   }
-  
-  console.log('🔍 saveFormulaPositions קרא לי עם pageIndex:', pageIndex);
   
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   const pageContainer = pages[pageIndex];
   if (!pageContainer) {
-    console.error('❌ לא מצאתי את pageContainer בindex:', pageIndex);
+    console.warn('❌ לא מצאתי pageContainer בindex:', pageIndex);
     return;
   }
   
   const formulas = [];
-  pageContainer.querySelectorAll('.dropped-formula').forEach((formula, i) => {
-    const formulaData = {
+  pageContainer.querySelectorAll('.dropped-formula').forEach(formula => {
+    formulas.push({
       text: formula.textContent.replace('×', ''), // הסרת כפתור ה-X
       x: formula.style.left,
       y: formula.style.top
-    };
-    formulas.push(formulaData);
-    console.log(`  [${i}] נוסחה: "${formulaData.text}" @ ${formulaData.x}, ${formulaData.y}`);
+    });
   });
   
-  console.log(`💾 סה"כ ${formulas.length} נוסחאות למחברת "${app.currentNotebook}" דף ${pageIndex}`);
+  console.log('💾 saveFormulaPositions:', formulas);
   
   // שמירה במבנה הנתונים
   if (app.subjects[app.currentNotebook].pages[pageIndex]) {
     app.subjects[app.currentNotebook].pages[pageIndex].formulas = formulas;
-    console.log('✅ שמורו בנתונים:', app.subjects[app.currentNotebook].pages[pageIndex].formulas);
+    console.log('✅ שמורו בנתונים - עכשיו קוראים ל-saveNotebookData');
     
-    // שמירה ל-localStorage ו-Supabase - עם await!
-    try {
-      await app.saveNotebookData();
-      console.log('✅ saveNotebookData הסתיים בהצלחה!');
-    } catch (err) {
-      console.error('❌ שגיאה ב-saveNotebookData:', err);
-    }
+    // שמור עם logging
+    app.saveNotebookData().catch(err => {
+      console.error('❌ בעיה ב-saveNotebookData:', err);
+    });
   } else {
-    console.error('❌ עמוד לא קיים:', pageIndex);
+    console.warn('❌ עמוד לא קיים:', pageIndex);
   }
 },
 
@@ -10411,18 +10351,16 @@ async exportNotebookToPDF() {
     for (let pageIdx = 0; pageIdx < pageElements.length; pageIdx++) {
       const pageEl = pageElements[pageIdx];
       
-      // בדוק אם יש ציורים, צורות, או נוסחאות בדף
+      // בדוק אם יש ציורים או צורות בדף
       const hasDrawings = pageEl.querySelector('canvas') || pageEl.querySelector('.interactive-shape') || pageEl.querySelector('.draggable-image');
-      const hasFormulas = pageEl.querySelector('.dropped-formula');
       
-      if (hasDrawings || hasFormulas) {
-        // אם יש ציורים, צורות או נוסחאות - ייצוא משולב
+      if (hasDrawings) {
+        // אם יש ציורים או צורות - ייצוא משולב
         try {
-          const extraMsg = hasFormulas && !hasDrawings ? 'עם נוסחאות' : 'עם ציורים';
           loadingMessage.innerHTML = `
             <div style="margin-bottom: 15px;">📄</div>
             <div>יוצר PDF...</div>
-            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">מייצא דף ${pageIdx + 1} ${extraMsg}...</div>
+            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">מייצא דף ${pageIdx + 1} עם ציורים...</div>
           `;
           
           if (!isFirstPdfPage) {
@@ -10500,37 +10438,6 @@ async exportNotebookToPDF() {
             
             const imgData = shapeCanvas.toDataURL('image/png');
             pdf.addImage(imgData, 'PNG', shapeX, shapeY, shapeW, shapeH);
-          }
-
-          // ייצוא נוסחאות
-          const formulas = pageEl.querySelectorAll('.dropped-formula');
-          for (const formula of formulas) {
-            try {
-              const formulaRect = formula.getBoundingClientRect();
-              
-              // חישוב מיקום ביחס לדף
-              const xPercent = (formulaRect.left - pageRect.left) / pageRect.width;
-              const yPercent = (formulaRect.top - pageRect.top) / pageRect.height;
-              
-              const formulaX = xPercent * pageWidth;
-              const formulaY = yPercent * pageHeight;
-              
-              // קבלת טקסט הנוסחה
-              const formulaText = formula.textContent.replace('×', '').trim();
-              
-              // ציור תיבה ליד הנוסחה
-              pdf.setDrawColor(243, 156, 18);
-              pdf.setLineWidth(0.5);
-              pdf.rect(formulaX - 2, formulaY - 2, formulaText.length * 1.5 + 4, 6, '');
-              
-              // כתיבת הנוסחה
-              pdf.setFont('Rubik');
-              pdf.setFontSize(10);
-              pdf.setTextColor(50, 50, 50);
-              pdf.text(formulaText, formulaX, formulaY + 3, { align: 'left' });
-            } catch (e) {
-              console.warn('שגיאה בייצוא נוסחה:', e);
-            }
           }
           
           // טקסט
@@ -11777,19 +11684,18 @@ insertImage() {
       // שמירת נתוני מחברות
       saveNotebookData: async function() {
         try {
-          console.log('💾 saveNotebookData - מתחיל שמירה...');
-          console.log('📊 subjects שמחברות:', JSON.stringify(this.subjects, null, 2));
+          console.log('💾 saveNotebookData - שומר את כל הנתונים');
           
           // שמירה ב-localStorage (תמיד)
           localStorage.setItem('notebookData', JSON.stringify(this.subjects));
-          console.log('✅ שמור ב-localStorage בהצלחה');
+          console.log('✅ שמור ב-localStorage');
           
           // שמירה ב-Supabase (אם זמין)
-          const result = await saveToSupabase('notebook_data', this.subjects);
-          if (result.success) {
-            console.log('✅ שמור ב-Supabase בהצלחה');
-          } else {
-            console.warn('⚠️ בעיה בשמירה ל-Supabase:', result.error);
+          try {
+            await saveToSupabase('notebook_data', this.subjects);
+            console.log('✅ שמור ב-Supabase');
+          } catch (supabaseError) {
+            console.warn('⚠️ Supabase לא זמין:', supabaseError.message);
           }
         } catch (error) {
           console.error('❌ שגיאה בשמירת נתונים:', error);
@@ -11809,30 +11715,30 @@ insertImage() {
           if (cloudData) {
             // יש נתונים בענן - השתמש בהם
             console.log('✅ נטען מהענן - מחברות');
-            console.log('📊 cloudData:', JSON.stringify(cloudData, null, 2));
             dataToLoad = cloudData;
             // שמור גם ב-localStorage כגיבוי
             localStorage.setItem('notebookData', JSON.stringify(cloudData));
           } else {
             // אין נתונים בענן
             console.log('⚠️ אין נתונים בענן - התחל ריק');
+            // אל תטען מ-localStorage - זה עשוי להיות של משתמש אחר!
             dataToLoad = null;
           }
           
           // טען את הנתונים
           if (dataToLoad) {
             Object.keys(dataToLoad).forEach(key => {
-              console.log(`🔄 טוען מחברת: ${key}`);
+              console.log('🔄 טוען מחברת:', key);
               if (this.subjects[key]) {
-                // העתק את כל המידע כולל pages, formulas וכל אלמנט אחר
+                // העתק pages
                 this.subjects[key].pages = dataToLoad[key].pages || this.subjects[key].pages;
                 
-                // וודא שformulas גם נטענות
+                // וודא שformulas נטענות
                 if (dataToLoad[key].pages) {
                   dataToLoad[key].pages.forEach((page, idx) => {
                     if (page.formulas && page.formulas.length > 0) {
                       this.subjects[key].pages[idx].formulas = page.formulas;
-                      console.log(`  ✅ דף ${idx} - ${page.formulas.length} נוסחאות טעונות`);
+                      console.log(`  ✅ דף ${idx} - ${page.formulas.length} נוסחאות`);
                     }
                   });
                 }
