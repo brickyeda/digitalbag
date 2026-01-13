@@ -8385,7 +8385,11 @@ this.showPage('homepage');
        
 // שמור ציורים לפני מעבר לדף אחר
 if (this.currentNotebook && pageId !== 'notebookView') {
-  this.saveCurrentNotebookDrawings();
+  this.saveCurrentNotebookDrawings().then(() => {
+    console.log('✅ ציורים שמורים לפני מעבר');
+  }).catch((err) => {
+    console.error('❌ בעיה בשמירת ציורים:', err);
+  });
 }
  
         // הסתר את כל הדפים
@@ -8429,10 +8433,17 @@ if (this.currentNotebook && pageId !== 'notebookView') {
 } else if (pageId === 'notebooks') {
   // שמור ציורים לפני יציאה מהמחברת
   if (this.currentNotebook) {
-    this.saveCurrentNotebookDrawings();
+    this.saveCurrentNotebookDrawings().then(() => {
+      console.log('✅ ציורים שמורים לפני חזרה לתצוגת מחברות');
+      this.renderNotebooks();
+    }).catch((err) => {
+      console.error('❌ בעיה בשמירת ציורים:', err);
+      this.renderNotebooks();
+    });
+  } else {
+    this.renderNotebooks();
   }
-  this.renderNotebooks();
-        }
+}
         
         // בדיקה והפעלת טוטוריאל
         if (typeof TutorialSystem !== 'undefined') {
@@ -8937,8 +8948,10 @@ savePage(pageIndex, content) {
 },
 
 // שמירת כל הציורים והנוסחאות של המחברת הנוכחית
-saveCurrentNotebookDrawings() {
+async saveCurrentNotebookDrawings() {
   if (!this.currentNotebook) return;
+  
+  console.log('💾 saveCurrentNotebookDrawings - שומר ציורים וצורות');
   
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   pages.forEach((pageContainer, index) => {
@@ -8989,10 +9002,12 @@ saveCurrentNotebookDrawings() {
     
     if (formulas.length > 0) {
       this.subjects[this.currentNotebook].pages[index].formulas = formulas;
+      console.log(`  דף ${index}: ${formulas.length} נוסחאות שמורות`);
     }
   });
   
-  this.saveNotebookData();
+  await this.saveNotebookData();
+  console.log('✅ saveCurrentNotebookDrawings הסתיים');
 },
 
 // גרירת נוסחה
@@ -9084,8 +9099,8 @@ deleteBtn.onclick = function(e) {
   };
   
   // שמור שינויים בזמן עריכה
-  formulaDiv.oninput = function() {
-    app.saveFormulaPositions(pageIndex);
+  formulaDiv.oninput = async function() {
+    await app.saveFormulaPositions(pageIndex);
   };
   
   // גרירה מתוקנת
@@ -9159,26 +9174,26 @@ deleteBtn.onclick = function(e) {
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);  
 // שמירה אוטומטית כשמוסיפים נוסחה
-formulaDiv.addEventListener('mouseup', () => {
+formulaDiv.addEventListener('mouseup', async () => {
   // מצא את אינדקס הדף
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   const pageIndex = Array.from(pages).indexOf(container);
   if (pageIndex !== -1) {
-    setTimeout(() => app.saveFormulaPositions(pageIndex), 100);
+    setTimeout(async () => await app.saveFormulaPositions(pageIndex), 100);
   }
 });
 
 // שמירה גם כשמסיימים לערוך את הטקסט
-formulaDiv.addEventListener('blur', () => {
+formulaDiv.addEventListener('blur', async () => {
   const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
   const pageIndex = Array.from(pages).indexOf(container);
   if (pageIndex !== -1) {
-    app.saveFormulaPositions(pageIndex);
+    await app.saveFormulaPositions(pageIndex);
   }
 });
 
   container.appendChild(formulaDiv);
-  this.saveFormulaPositions(pageIndex);
+  await this.saveFormulaPositions(pageIndex);
 },
 
 makeFormulaDraggable(formulaDiv, pageIndex) {
@@ -9214,17 +9229,20 @@ makeFormulaDraggable(formulaDiv, pageIndex) {
     formulaDiv.style.top = y + 'px';
   };
   
-  document.onmouseup = function() {
+  document.onmouseup = async function() {
     if (isDragging) {
       isDragging = false;
       formulaDiv.style.cursor = 'move';
-      app.saveFormulaPositions(pageIndex);
+      await app.saveFormulaPositions(pageIndex);
     }
   };
 },
 
-saveFormulaPositions(pageIndex) {
-  if (!app.currentNotebook) return;
+async saveFormulaPositions(pageIndex) {
+  if (!app.currentNotebook) {
+    console.error('❌ אין מחברת פעילה');
+    return;
+  }
   
   console.log('🔍 saveFormulaPositions קרא לי עם pageIndex:', pageIndex);
   
@@ -9253,12 +9271,13 @@ saveFormulaPositions(pageIndex) {
     app.subjects[app.currentNotebook].pages[pageIndex].formulas = formulas;
     console.log('✅ שמורו בנתונים:', app.subjects[app.currentNotebook].pages[pageIndex].formulas);
     
-    // שמירה ל-localStorage ו-Supabase עם await
-    app.saveNotebookData().then(() => {
+    // שמירה ל-localStorage ו-Supabase - עם await!
+    try {
+      await app.saveNotebookData();
       console.log('✅ saveNotebookData הסתיים בהצלחה!');
-    }).catch((err) => {
+    } catch (err) {
       console.error('❌ שגיאה ב-saveNotebookData:', err);
-    });
+    }
   } else {
     console.error('❌ עמוד לא קיים:', pageIndex);
   }
