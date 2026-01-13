@@ -8714,7 +8714,19 @@ applyZoom() {
         notebook.pages.forEach((page, index) => {
           const pageElement = this.createNotebookPage(page, index, notebook.pageType);
           container.appendChild(pageElement);
-style="position: sticky !important;"
+          
+          // טעינת נוסחאות אחרי שה-pageElement בתוך DOM
+          if (page.formulas && page.formulas.length > 0) {
+            setTimeout(() => {
+              const pageContainer = pageElement.querySelector('.lined-page, .grid-page, .blank-page');
+              if (pageContainer) {
+                console.log(`טוען ${page.formulas.length} נוסחאות לדף ${index}`);
+                page.formulas.forEach(f => {
+                  this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
+                });
+              }
+            }, 50);
+          }
           
           // טעינת עיצוב שמור
           if (page.formatting) {
@@ -8788,15 +8800,6 @@ style="position: sticky !important;"
           </div>
         `;
    
-  if (pageData.formulas && pageData.formulas.length > 0) {
-    setTimeout(() => {
-      const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-      pageData.formulas.forEach(f => {
-        this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
-      });
-    }, 100);
-  }
-     
 // טעינת ציור שמור
 if (pageData.drawing) {
   setTimeout(() => {
@@ -8838,29 +8841,6 @@ if (pageData.interactiveShapes && pageData.interactiveShapes.length > 0) {
       });
     }
   }, 250);
-}
-
-// טעינת נוסחאות שמורות
-if (pageData.formulas && pageData.formulas.length > 0) {
-  setTimeout(() => {
-    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-    if (pageContainer) {
-      pageData.formulas.forEach(f => {
-        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
-      });
-    }
-  }, 100);
-}// טעינת נוסחאות שמורות
-if (pageData.formulas && pageData.formulas.length > 0) {
-  setTimeout(() => {
-    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-    if (pageContainer) {
-      pageData.formulas.forEach(f => {
-        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
-      });
-    }
-  }, 100);
-}
 
         return pageDiv;
       },
