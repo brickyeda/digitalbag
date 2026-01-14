@@ -6193,15 +6193,6 @@ height: 100%;
               <!-- צבעים יתווספו בJS -->
             </div>
           </div>
-          
-          <div style="position: relative;">
-            <button class="toolbar-color-btn bg-color-btn" id="inPageBgColor" onclick="app.toggleGlobalColorPicker('background')" title="צבע רקע">
-              🎨
-            </button>
-            <div class="color-picker" id="inpage-bg-color-picker">
-              <!-- צבעים יתווספו בJS -->
-            </div>
-          </div>
         </div>
 
         <!-- Alignment Group -->
@@ -6955,14 +6946,46 @@ height: 100%;
             <div class="timer-display">
               <!-- Timer Presets -->
               <div class="timer-presets">
-                <button class="timer-preset" onclick="timerApp.setPreset(1, 0)">1 דקה</button>
-                <button class="timer-preset" onclick="timerApp.setPreset(5, 0)">5 דקות</button>
-                <button class="timer-preset" onclick="timerApp.setPreset(10, 0)">10 דקות</button>
-                <button class="timer-preset" onclick="timerApp.setPreset(15, 0)">15 דקות</button>
-                <button class="timer-preset" onclick="timerApp.setPreset(25, 0)">25 דקות</button>
-                <button class="timer-preset" onclick="timerApp.setPreset(30, 0)">30 דקות</button>
-                <button class="timer-preset" onclick="timerApp.setPreset(45, 0)">45 דקות</button>
-                <button class="timer-preset" onclick="timerApp.focusOnInput()">⌨️ הזנה ידנית</button>
+                <button class="timer-preset" onclick="timerApp.setPreset(1, 0)">
+                  <div class="timer-preset-icon">⏱️</div>
+                  <div class="timer-preset-name">דקה</div>
+                  <div class="timer-preset-time">1:00</div>
+                </button>
+                <button class="timer-preset" onclick="timerApp.setPreset(5, 0)">
+                  <div class="timer-preset-icon">⏱️</div>
+                  <div class="timer-preset-name">5 דקות</div>
+                  <div class="timer-preset-time">5:00</div>
+                </button>
+                <button class="timer-preset" onclick="timerApp.setPreset(10, 0)">
+                  <div class="timer-preset-icon">⏱️</div>
+                  <div class="timer-preset-name">10 דקות</div>
+                  <div class="timer-preset-time">10:00</div>
+                </button>
+                <button class="timer-preset" onclick="timerApp.setPreset(15, 0)">
+                  <div class="timer-preset-icon">⏱️</div>
+                  <div class="timer-preset-name">15 דקות</div>
+                  <div class="timer-preset-time">15:00</div>
+                </button>
+                <button class="timer-preset" onclick="timerApp.setPreset(25, 0)">
+                  <div class="timer-preset-icon">🍅</div>
+                  <div class="timer-preset-name">פומודורו</div>
+                  <div class="timer-preset-time">25:00</div>
+                </button>
+                <button class="timer-preset" onclick="timerApp.setPreset(30, 0)">
+                  <div class="timer-preset-icon">⏱️</div>
+                  <div class="timer-preset-name">30 דקות</div>
+                  <div class="timer-preset-time">30:00</div>
+                </button>
+                <button class="timer-preset" onclick="timerApp.setPreset(45, 0)">
+                  <div class="timer-preset-icon">⏱️</div>
+                  <div class="timer-preset-name">45 דקות</div>
+                  <div class="timer-preset-time">45:00</div>
+                </button>
+                <button class="timer-preset custom" onclick="timerApp.focusOnInput()">
+                  <div class="timer-preset-icon">⌨️</div>
+                  <div class="timer-preset-name">הזנה ידנית</div>
+                  <div class="timer-preset-time">בחר</div>
+                </button>
               </div>
 
               <!-- Timer Input -->
@@ -7477,7 +7500,7 @@ height: 100%;
       <div class="about-contact">
         <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
         <div class="about-contact-email">
-          <a href="/cdn-cgi/l/email-protection#3a5848535951435f5e5b7a5d575b535614595557"><span class="__cf_email__" data-cfemail="a1c3d3c8c2cad8c4c5c0e1c6ccc0c8cd8fc2cecc">[email&#160;protected]</span></a>
+          <a href="mailto:brickyeda@gmail.com">brickyeda@gmail.com</a>
         </div>
       </div>
       
@@ -8669,6 +8692,7 @@ generateGalleryItems(notebook) {
   galleryGrid.innerHTML = notebook.pages.map((page, index) => {
     const isCurrent = index === this.currentPage;
     const textPreview = this.getPageTextPreview(page);
+    const pageTitle = page.title && page.title.trim() ? page.title.trim() : `דף ${index + 1}`;
     
     return `
       <div class="gallery-item ${isCurrent ? 'current-page' : ''}" 
@@ -8680,7 +8704,7 @@ generateGalleryItems(notebook) {
           </div>
         </div>
         <div class="gallery-info">
-          <div class="gallery-page-number">דף ${index + 1}</div>
+          <div class="gallery-page-number">${pageTitle}</div>
           <div class="gallery-page-preview">${textPreview || 'דף ריק'}</div>
         </div>
       </div>
@@ -9877,7 +9901,7 @@ applyColor(type, color) {
 
       // הוספת רשימה גלובלית
       insertGlobalList(listType) {
-        // אם אין דף פעיל, נסה לבחור את הדף הנוכחי
+        // אם אין דף פעיל, נסה לבחור את הדף הראשון
         if (this.activeTextareaIndex === undefined) {
           const notebook = this.subjects[this.currentNotebook];
           if (!notebook || !notebook.pages || notebook.pages.length === 0) {
@@ -9885,9 +9909,9 @@ applyColor(type, color) {
             return;
           }
           
-          // בחר את הדף הנוכחי
-          this.activeTextareaIndex = this.currentPage || 0;
-          const textarea = document.getElementById(`textarea-${this.activeTextareaIndex}`);
+          // בחר את הדף הראשון אם קיים
+          this.activeTextareaIndex = 0;
+          const textarea = document.getElementById(`textarea-0`);
           if (textarea) {
             textarea.focus();
           } else {
@@ -10038,13 +10062,30 @@ applyColor(type, color) {
 
       // הוספת סימן גלובלי
       insertGlobalSymbol(symbol) {
+        // אם אין דף פעיל, נסה לבחור את הדף הראשון
         if (this.activeTextareaIndex === undefined) {
-          alert('נא לבחור דף לעריכה');
-          return;
+          const notebook = this.subjects[this.currentNotebook];
+          if (!notebook || !notebook.pages || notebook.pages.length === 0) {
+            alert('נא ליצור דף במחברת ולהקליק עליו לפני שימוש בכלי זה');
+            return;
+          }
+          
+          // בחר את הדף הראשון
+          this.activeTextareaIndex = 0;
+          const textarea = document.getElementById(`textarea-0`);
+          if (textarea) {
+            textarea.focus();
+          } else {
+            alert('נא להקליק על הדף במחברת לפני שימוש בכלי זה');
+            return;
+          }
         }
 
         const textarea = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-        if (!textarea) return;
+        if (!textarea) {
+          alert('נא לבחור דף לעריכה');
+          return;
+        }
         
         const start = textarea.selectionStart;
         textarea.value = textarea.value.substring(0, start) + symbol + textarea.value.substring(start);
@@ -12565,12 +12606,13 @@ const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth()
         this.renderWeekContent(startOfWeek);
       },
 
-      // קבלת תחילת השבוע
+      // קבלת תחילת השבוע הנוכחי
       getStartOfWeek() {
-        const date = new Date(this.currentCalendarYear, this.currentCalendarMonth, 1);
-        const day = date.getDay();
-        date.setDate(date.getDate() - day);
-        return date;
+        const today = new Date();
+        const day = today.getDay();
+        const diff = today.getDate() - day;
+        const startOfWeek = new Date(today.setDate(diff));
+        return startOfWeek;
       },
 
       // רינדור כותרת שבוע
@@ -12643,10 +12685,9 @@ const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth()
       // רינדור תצוגת יום
       renderDayView() {
         const today = new Date();
-        const currentDate = new Date(this.currentCalendarYear, this.currentCalendarMonth, today.getDate());
         
-        this.renderDayHeader(currentDate);
-        this.renderDayContent(currentDate);
+        this.renderDayHeader(today);
+        this.renderDayContent(today);
       },
 
       // רינדור כותרת יום
@@ -13178,10 +13219,79 @@ const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth()
           eventDetails += `🔄 אירוע חוזר: ${event.repeatFrequency === 'weekly' ? 'שבועי' : event.repeatFrequency === 'monthly' ? 'חודשי' : 'שנתי'}\n`;
         }
         
-        const action = confirm(eventDetails + '\nהאם ברצונך למחוק אירוע זה?');
+        const action = confirm(eventDetails + '\n\nבחר פעולה:\nOK = עריכה\nביטול = מחיקה');
         
         if (action) {
-          this.deleteEvent(eventId);
+          this.editEvent(eventId);
+        } else {
+          const deleteConfirm = confirm('האם ברצונך למחוק אירוע זה?');
+          if (deleteConfirm) {
+            this.deleteEvent(eventId);
+          }
+        }
+      },
+      
+      // עריכת אירוע
+      editEvent(eventId) {
+        const event = this.events.find(e => e.id === eventId);
+        if (!event) return;
+        
+        const modal = this.createEventModal();
+        document.body.appendChild(modal);
+        
+        // מילוי הטופס עם הנתונים הקיימים
+        document.getElementById('eventTitle').value = event.title;
+        document.getElementById('eventDate').value = event.date;
+        document.getElementById('eventType').value = event.type;
+        document.getElementById('eventLocation').value = event.location || '';
+        document.getElementById('eventDescription').value = event.description || '';
+        document.getElementById('eventAllDay').checked = event.isAllDay;
+        document.getElementById('eventStartTime').value = event.startTime || '08:00';
+        document.getElementById('eventEndTime').value = event.endTime || '09:00';
+        
+        // שינוי כפתור השמירה לעדכון
+        const saveBtn = modal.querySelector('.modal-footer button:first-child');
+        if (saveBtn) {
+          saveBtn.textContent = '🔄 עדכן אירוע';
+          saveBtn.onclick = () => this.updateEvent(eventId);
+        }
+      },
+      
+      // עדכון אירוע
+      updateEvent(eventId) {
+        const title = document.getElementById('eventTitle').value.trim();
+        const date = document.getElementById('eventDate').value;
+        const type = document.getElementById('eventType').value;
+        const location = document.getElementById('eventLocation').value;
+        const description = document.getElementById('eventDescription').value;
+        const isAllDay = document.getElementById('eventAllDay').checked;
+        const startTime = document.getElementById('eventStartTime').value;
+        const endTime = document.getElementById('eventEndTime').value;
+        
+        if (!title || !date) {
+          alert('נא למלא כותרת ותאריך');
+          return;
+        }
+        
+        const eventIndex = this.events.findIndex(e => e.id === eventId);
+        if (eventIndex !== -1) {
+          this.events[eventIndex] = {
+            ...this.events[eventIndex],
+            title,
+            date,
+            type,
+            location,
+            description,
+            isAllDay,
+            startTime,
+            endTime
+          };
+          
+          this.saveCalendarData();
+          this.closeEventModal();
+          this.renderCalendar();
+          this.updateCalendarStats();
+          alert('אירוע עודכן בהצלחה!');
         }
       },
 
@@ -17046,4 +17156,6 @@ window.TutorialSystem = TutorialSystem;
   </div>
   <div id="notificationPermissionBanner" style="display: none; background: #fff3cd; padding: 10px 15px; text-align: center; border-bottom: 1px solid #ffc107; position: relative; z-index: 100000;">
     <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התראות כדי לקבל תזכורות</div>
-    <button onclick="app.requestNotificationPermission()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; pointer-
+    <button onclick="app.requestNotificationPermission()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; pointer-</div>
+</body>
+</html>
