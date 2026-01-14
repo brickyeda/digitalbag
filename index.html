@@ -2807,19 +2807,22 @@ scrollbar-gutter: stable;
   background: white;
   border: 2px solid #f39c12;
   border-radius: 8px;
-  padding: 8px 12px;
-  cursor: text;
+  padding: 10px 15px;
+  cursor: move;
   font-family: 'Times New Roman', serif;
-  font-size: 14px;
+  font-size: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   z-index: 5;
-  user-select: text;
-  outline: none;
-  min-width: 80px;
+  min-width: 60px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
   
   /* תיקון כיוון הטקסט */
   direction: ltr !important;
-  text-align: left !important;
+  text-align: center !important;
   unicode-bidi: embed;
 }
 
@@ -2828,15 +2831,123 @@ scrollbar-gutter: stable;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-.dropped-formula:focus {
+.dropped-formula.selected {
   border-color: #667eea;
+  border-width: 3px;
+}
+
+/* תוכן הנוסחה */
+.formula-content {
+  white-space: nowrap;
+  outline: none;
+  cursor: text;
+  min-width: 20px;
+}
+
+.formula-content:focus {
   background: #fffef8;
+  border-radius: 4px;
+}
+
+/* כפתור מחיקה */
+.formula-delete-btn {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #e74c3c;
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 15;
+  border: 2px solid white;
+}
+
+.dropped-formula:hover .formula-delete-btn,
+.dropped-formula.selected .formula-delete-btn {
+  display: flex;
+}
+
+/* ידיות למתיחה - RESIZE HANDLES */
+.formula-resize-handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #667eea;
+  border: 2px solid white;
+  border-radius: 2px;
+  z-index: 10;
+  display: none;
+}
+
+.dropped-formula:hover .formula-resize-handle,
+.dropped-formula.selected .formula-resize-handle {
+  display: block;
+}
+
+.formula-resize-handle.top-right {
+  top: -6px;
+  right: -6px;
+  cursor: ne-resize;
+}
+
+.formula-resize-handle.top-left {
+  top: -6px;
+  left: -6px;
+  cursor: nw-resize;
+}
+
+.formula-resize-handle.bottom-right {
+  bottom: -6px;
+  right: -6px;
+  cursor: se-resize;
+}
+
+.formula-resize-handle.bottom-left {
+  bottom: -6px;
+  left: -6px;
+  cursor: sw-resize;
+}
+
+.formula-resize-handle.middle-right {
+  top: 50%;
+  right: -6px;
+  transform: translateY(-50%);
+  cursor: e-resize;
+}
+
+.formula-resize-handle.middle-left {
+  top: 50%;
+  left: -6px;
+  transform: translateY(-50%);
+  cursor: w-resize;
+}
+
+.formula-resize-handle.top-middle {
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: n-resize;
+}
+
+.formula-resize-handle.bottom-middle {
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  cursor: s-resize;
 }
 
 .formula-item:active {
   cursor: grabbing;
   transform: scale(0.95);
 }
+
 
 .formula-item.dragging {
   opacity: 0.5;
@@ -8792,7 +8903,7 @@ style="position: sticky !important;"
     setTimeout(() => {
       const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
       pageData.formulas.forEach(f => {
-        this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
+        this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index, f.width || null, f.height || null, f.fontSize || 16);
       });
     }, 100);
   }
@@ -8846,7 +8957,7 @@ if (pageData.formulas && pageData.formulas.length > 0) {
     const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
     if (pageContainer) {
       pageData.formulas.forEach(f => {
-        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
+        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index, f.width || null, f.height || null, f.fontSize || 16);
       });
     }
   }, 100);
@@ -8856,7 +8967,7 @@ if (pageData.formulas && pageData.formulas.length > 0) {
     const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
     if (pageContainer) {
       pageData.formulas.forEach(f => {
-        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index);
+        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index, f.width || null, f.height || null, f.fontSize || 16);
       });
     }
   }, 100);
@@ -9001,10 +9112,14 @@ saveCurrentNotebookDrawings() {
     // שמירת נוסחאות
     const formulas = [];
     pageContainer.querySelectorAll('.dropped-formula').forEach(formula => {
+      const content = formula.querySelector('.formula-content');
       formulas.push({
-        text: formula.textContent,
+        text: content ? content.textContent : formula.textContent,
         x: formula.style.left,
-        y: formula.style.top
+        y: formula.style.top,
+        width: formula.offsetWidth,
+        height: formula.offsetHeight,
+        fontSize: parseInt(formula.style.fontSize) || 16
       });
     });
     
@@ -9047,159 +9162,208 @@ dropFormula(event, pageIndex) {
   this.createDroppedFormula(pageContainer, formula, x, y, pageIndex);
 },
 
-createDroppedFormula(container, formula, x, y, pageIndex) {
+createDroppedFormula(container, formula, x, y, pageIndex, width = null, height = null, fontSize = 16) {
   const formulaDiv = document.createElement('div');
   formulaDiv.className = 'dropped-formula';
-  formulaDiv.contentEditable = 'true';
-  formulaDiv.textContent = formula;
   formulaDiv.style.left = x + 'px';
   formulaDiv.style.top = y + 'px';
-  formulaDiv.style.direction = 'ltr';
-  formulaDiv.style.textAlign = 'left';
   
-  // הוסף כפתור X למחיקה
+  if (width) formulaDiv.style.width = width + 'px';
+  if (height) formulaDiv.style.height = height + 'px';
+  formulaDiv.style.fontSize = fontSize + 'px';
+  
+  // תוכן הנוסחה - ניתן לעריכה
+  const content = document.createElement('span');
+  content.className = 'formula-content';
+  content.contentEditable = 'true';
+  content.textContent = formula;
+  content.spellcheck = false;
+  
+  // מניעת גרירה כשעורכים
+  content.addEventListener('mousedown', (e) => {
+    e.stopPropagation();
+  });
+  
+  content.addEventListener('focus', () => {
+    formulaDiv.classList.add('selected');
+  });
+  
+  // שמירה אחרי עריכת טקסט
+  content.addEventListener('blur', () => {
+    setTimeout(() => app.saveCurrentNotebookDrawings(), 100);
+  });
+  
+  content.addEventListener('input', () => {
+    clearTimeout(content.saveTimeout);
+    content.saveTimeout = setTimeout(() => app.saveCurrentNotebookDrawings(), 500);
+  });
+  
+  formulaDiv.appendChild(content);
+  
+  // כפתור מחיקה
   const deleteBtn = document.createElement('span');
+  deleteBtn.className = 'formula-delete-btn';
   deleteBtn.innerHTML = '×';
-  deleteBtn.style.cssText = `
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #e74c3c;
-    color: white;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    z-index: 10;
-  `;
-  
-deleteBtn.onclick = function(e) {
-  e.stopPropagation();
-  if (confirm('למחוק נוסחה זו?')) {
-    formulaDiv.remove();
-    // שמירה אחרי מחיקה
-    const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
-    const pageIndex = Array.from(pages).indexOf(container);
-    if (pageIndex !== -1) {
-      setTimeout(() => {
-        app.saveCurrentNotebookDrawings();
-      }, 100);
+  deleteBtn.onclick = (e) => {
+    e.stopPropagation();
+    if (confirm('למחוק נוסחה זו?')) {
+      formulaDiv.remove();
+      setTimeout(() => app.saveCurrentNotebookDrawings(), 100);
     }
-  }
-};
-  
+  };
   formulaDiv.appendChild(deleteBtn);
   
-  // הצג/הסתר כפתור מחיקה
-  formulaDiv.onmouseenter = function() {
-    deleteBtn.style.display = 'flex';
-  };
+  // יצירת 8 ידיות resize
+  const handles = [
+    'top-left', 'top-middle', 'top-right',
+    'middle-left', 'middle-right',
+    'bottom-left', 'bottom-middle', 'bottom-right'
+  ];
   
-  formulaDiv.onmouseleave = function() {
-    deleteBtn.style.display = 'none';
-  };
+  handles.forEach(pos => {
+    const handle = document.createElement('div');
+    handle.className = 'formula-resize-handle ' + pos;
+    handle.dataset.handle = pos;
+    formulaDiv.appendChild(handle);
+  });
   
-  // שמור שינויים בזמן עריכה
-  formulaDiv.oninput = function() {
-    app.saveFormulaPositions(pageIndex);
-  };
-  
-  // גרירה מתוקנת
+  // === משתנים לגרירה ו-resize ===
   let isDragging = false;
-  let startX, startY;
-  let initialLeft, initialTop;
+  let isResizing = false;
+  let currentHandle = null;
+  let startX, startY, startWidth, startHeight, startLeft, startTop;
   
-  formulaDiv.onmousedown = function(e) {
-    // אל תתחיל גרירה אם לוחצים על כפתור המחיקה
-    if (e.target === deleteBtn) return;
+  // === אירועי גרירה של הנוסחה ===
+  formulaDiv.addEventListener('mousedown', (e) => {
+    if (e.target.classList.contains('formula-resize-handle')) return;
+    if (e.target.classList.contains('formula-delete-btn')) return;
+    if (e.target.classList.contains('formula-content')) return;
     
-    // אם לוחצים בתוך הטקסט, תן לערוך
-    if (e.offsetX > 10 && e.offsetX < formulaDiv.offsetWidth - 10 && 
-        e.offsetY > 10 && e.offsetY < formulaDiv.offsetHeight - 10) {
-      return;
-    }
-    
-    // אחרת, התחל גרירה
     isDragging = true;
-    formulaDiv.style.cursor = 'grabbing';
-    formulaDiv.contentEditable = 'false';
     
-    // שמור מיקום התחלתי
-    startX = e.clientX;
-    startY = e.clientY;
-    initialLeft = parseFloat(formulaDiv.style.left) || 0;
-    initialTop = parseFloat(formulaDiv.style.top) || 0;
+    document.querySelectorAll('.dropped-formula').forEach(f => f.classList.remove('selected'));
+    formulaDiv.classList.add('selected');
     
-    window.getSelection().removeAllRanges();
+    const rect = formulaDiv.getBoundingClientRect();
+    startX = e.clientX - rect.left;
+    startY = e.clientY - rect.top;
+    
     e.preventDefault();
-  };
+  });
   
-  const handleMouseMove = function(e) {
-    if (!isDragging) return;
-    
-    const parent = formulaDiv.parentElement;
-    if (!parent) return;
-    
-    // חשב הזזה
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
-    
-    // מיקום חדש = התחלתי + הזזה
-    let newX = initialLeft + deltaX;
-    let newY = initialTop + deltaY;
-    
-    newX = Math.max(0, Math.min(newX, parent.offsetWidth - formulaDiv.offsetWidth));
-    newY = Math.max(0, Math.min(newY, parent.offsetHeight - formulaDiv.offsetHeight));
-    
-    formulaDiv.style.left = newX + 'px';
-    formulaDiv.style.top = newY + 'px';
-  };
-  
-  const handleMouseUp = function() {
-    if (isDragging) {
-      isDragging = false;
-      formulaDiv.style.cursor = 'text';
-      formulaDiv.contentEditable = 'true';
+  // === אירועי resize ===
+  formulaDiv.querySelectorAll('.formula-resize-handle').forEach(handle => {
+    handle.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      isResizing = true;
+      currentHandle = handle.dataset.handle;
       
-      // שמירה אחרי גרירה
-      const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
-      const pageIndex = Array.from(pages).indexOf(container);
-      if (pageIndex !== -1) {
-        setTimeout(() => {
-          app.saveCurrentNotebookDrawings();
-        }, 100);
-      }
+      const rect = formulaDiv.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      startWidth = rect.width;
+      startHeight = rect.height;
+      startLeft = formulaDiv.offsetLeft;
+      startTop = formulaDiv.offsetTop;
+      
+      document.querySelectorAll('.dropped-formula').forEach(f => f.classList.remove('selected'));
+      formulaDiv.classList.add('selected');
+      
+      e.preventDefault();
+    });
+  });
+  
+  // === אירועי עכבר גלובליים ===
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      const parentRect = container.getBoundingClientRect();
+      let newX = e.clientX - parentRect.left - startX;
+      let newY = e.clientY - parentRect.top - startY;
+      
+      newX = Math.max(0, Math.min(newX, container.offsetWidth - formulaDiv.offsetWidth));
+      newY = Math.max(0, Math.min(newY, container.offsetHeight - formulaDiv.offsetHeight));
+      
+      formulaDiv.style.left = newX + 'px';
+      formulaDiv.style.top = newY + 'px';
     }
+    
+    if (isResizing && currentHandle) {
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+      let newLeft = startLeft;
+      let newTop = startTop;
+      
+      switch (currentHandle) {
+        case 'top-left':
+          newWidth = startWidth - deltaX;
+          newHeight = startHeight - deltaY;
+          newLeft = startLeft + deltaX;
+          newTop = startTop + deltaY;
+          break;
+        case 'top-middle':
+          newHeight = startHeight - deltaY;
+          newTop = startTop + deltaY;
+          break;
+        case 'top-right':
+          newWidth = startWidth + deltaX;
+          newHeight = startHeight - deltaY;
+          newTop = startTop + deltaY;
+          break;
+        case 'middle-left':
+          newWidth = startWidth - deltaX;
+          newLeft = startLeft + deltaX;
+          break;
+        case 'middle-right':
+          newWidth = startWidth + deltaX;
+          break;
+        case 'bottom-left':
+          newWidth = startWidth - deltaX;
+          newHeight = startHeight + deltaY;
+          newLeft = startLeft + deltaX;
+          break;
+        case 'bottom-middle':
+          newHeight = startHeight + deltaY;
+          break;
+        case 'bottom-right':
+          newWidth = startWidth + deltaX;
+          newHeight = startHeight + deltaY;
+          break;
+      }
+      
+      const minSize = 40;
+      if (newWidth >= minSize) {
+        formulaDiv.style.width = newWidth + 'px';
+        formulaDiv.style.left = newLeft + 'px';
+      }
+      if (newHeight >= minSize) {
+        formulaDiv.style.height = newHeight + 'px';
+        formulaDiv.style.top = newTop + 'px';
+      }
+      
+      // התאמת גודל פונט
+      const avgSize = (formulaDiv.offsetWidth + formulaDiv.offsetHeight) / 2;
+      const newFontSize = Math.max(12, Math.min(48, avgSize / 5));
+      formulaDiv.style.fontSize = newFontSize + 'px';
+    }
+  };
+  
+  const handleMouseUp = () => {
+    if (isDragging || isResizing) {
+      setTimeout(() => app.saveCurrentNotebookDrawings(), 100);
+    }
+    isDragging = false;
+    isResizing = false;
+    currentHandle = null;
   };
   
   document.addEventListener('mousemove', handleMouseMove);
-  document.addEventListener('mouseup', handleMouseUp);  
-// שמירה אוטומטית כשמוסיפים נוסחה
-formulaDiv.addEventListener('mouseup', () => {
-  // מצא את אינדקס הדף
-  const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
-  const pageIndex = Array.from(pages).indexOf(container);
-  if (pageIndex !== -1) {
-    setTimeout(() => app.saveFormulaPositions(pageIndex), 100);
-  }
-});
-
-// שמירה גם כשמסיימים לערוך את הטקסט
-formulaDiv.addEventListener('blur', () => {
-  const pages = document.querySelectorAll('.lined-page, .grid-page, .blank-page');
-  const pageIndex = Array.from(pages).indexOf(container);
-  if (pageIndex !== -1) {
-    app.saveFormulaPositions(pageIndex);
-  }
-});
+  document.addEventListener('mouseup', handleMouseUp);
 
   container.appendChild(formulaDiv);
-  this.saveFormulaPositions(pageIndex);
+  this.saveCurrentNotebookDrawings();
 },
 
 makeFormulaDraggable(formulaDiv, pageIndex) {
@@ -10396,7 +10560,7 @@ async exportNotebookToPDF() {
       const pageEl = pageElements[pageIdx];
       
       // בדוק אם יש ציורים או צורות בדף
-      const hasDrawings = pageEl.querySelector('canvas') || pageEl.querySelector('.interactive-shape') || pageEl.querySelector('.draggable-image');
+      const hasDrawings = pageEl.querySelector('canvas') || pageEl.querySelector('.interactive-shape') || pageEl.querySelector('.draggable-image') || pageEl.querySelector('.dropped-formula');
       
       if (hasDrawings) {
         // אם יש ציורים או צורות - ייצוא משולב
@@ -10482,6 +10646,37 @@ async exportNotebookToPDF() {
             
             const imgData = shapeCanvas.toDataURL('image/png');
             pdf.addImage(imgData, 'PNG', shapeX, shapeY, shapeW, shapeH);
+          }
+          
+          // ייצוא נוסחאות
+          const droppedFormulas = pageEl.querySelectorAll('.dropped-formula');
+          for (const formula of droppedFormulas) {
+            // הסתר ידיות וכפתור מחיקה לפני הצילום
+            const handles = formula.querySelectorAll('.formula-resize-handle, .formula-delete-btn');
+            handles.forEach(h => h.style.display = 'none');
+            
+            await new Promise(r => setTimeout(r, 30));
+            
+            const formulaCanvas = await html2canvas(formula, {
+              scale: 2,
+              backgroundColor: '#ffffff',
+              logging: false
+            });
+            
+            // החזר את הידיות
+            handles.forEach(h => h.style.display = '');
+            
+            const formulaRect = formula.getBoundingClientRect();
+            const scaleX = pageWidth / pageRect.width;
+            const scaleY = pageHeight / pageRect.height;
+            
+            const fX = (formulaRect.left - pageRect.left) * scaleX;
+            const fY = (formulaRect.top - pageRect.top) * scaleY;
+            const fW = formulaRect.width * scaleX;
+            const fH = formulaRect.height * scaleY;
+            
+            const imgData = formulaCanvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', fX, fY, fW, fH);
           }
           
           // טקסט
