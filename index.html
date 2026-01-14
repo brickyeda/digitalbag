@@ -8902,9 +8902,13 @@ style="position: sticky !important;"
   if (pageData.formulas && pageData.formulas.length > 0) {
     setTimeout(() => {
       const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
+      // ניקוי נוסחאות קיימות לפני טעינה
+      pageContainer.querySelectorAll('.dropped-formula').forEach(f => f.remove());
+      this.isLoadingFormulas = true;
       pageData.formulas.forEach(f => {
         this.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index, f.width || null, f.height || null, f.fontSize || 16);
       });
+      this.isLoadingFormulas = false;
     }, 100);
   }
      
@@ -8956,19 +8960,13 @@ if (pageData.formulas && pageData.formulas.length > 0) {
   setTimeout(() => {
     const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
     if (pageContainer) {
+      // ניקוי נוסחאות קיימות לפני טעינה
+      pageContainer.querySelectorAll('.dropped-formula').forEach(f => f.remove());
+      app.isLoadingFormulas = true;
       pageData.formulas.forEach(f => {
         app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index, f.width || null, f.height || null, f.fontSize || 16);
       });
-    }
-  }, 100);
-}// טעינת נוסחאות שמורות
-if (pageData.formulas && pageData.formulas.length > 0) {
-  setTimeout(() => {
-    const pageContainer = pageDiv.querySelector('.lined-page, .grid-page, .blank-page');
-    if (pageContainer) {
-      pageData.formulas.forEach(f => {
-        app.createDroppedFormula(pageContainer, f.text, parseFloat(f.x), parseFloat(f.y), index, f.width || null, f.height || null, f.fontSize || 16);
-      });
+      app.isLoadingFormulas = false;
     }
   }, 100);
 }
@@ -9363,7 +9361,10 @@ createDroppedFormula(container, formula, x, y, pageIndex, width = null, height =
   document.addEventListener('mouseup', handleMouseUp);
 
   container.appendChild(formulaDiv);
-  this.saveCurrentNotebookDrawings();
+  // לא לשמור אם זו טעינה מהזיכרון
+  if (!this.isLoadingFormulas) {
+    this.saveCurrentNotebookDrawings();
+  }
 },
 
 makeFormulaDraggable(formulaDiv, pageIndex) {
