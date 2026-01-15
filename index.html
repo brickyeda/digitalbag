@@ -9853,38 +9853,92 @@ toggleGlobalColorPicker(type) {
 },
 
 applyColor(type, color) {
-  // בדוק אם יש selection שמורה
-  if (!this.savedSelection) {
-    alert('בחר טקסט כדי לצבוע אותו');
-    return;
-  }
-  
-  // החזר את ה-selection ששמרנו
   const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(this.savedSelection);
+  const selectedText = sel.toString();
   
-  // בדוק שיש בחירה
-  if (sel.toString().length === 0) {
+  if (selectedText.length === 0) {
     alert('בחר טקסט כדי לצבוע אותו');
     return;
   }
   
-  // צבע את הטקסט עם execCommand
-  if (type === 'text') {
-    document.execCommand('foreColor', false, color);
+  console.log('🎨 צביעה:', selectedText.substring(0, 20) + '...');
+  
+  const activeEl = document.activeElement;
+  let divToUse = null;
+  
+  // מקרה 1: TEXTAREA - צריך להמיר ל-DIV contentEditable
+  if (activeEl.tagName === 'TEXTAREA') {
+    console.log('🔄 המרת TEXTAREA לDIV contentEditable');
+    
+    const value = activeEl.value;
+    const div = document.createElement('div');
+    div.id = activeEl.id;
+    div.className = activeEl.className;
+    div.contentEditable = 'true';
+    div.style.cssText = activeEl.style.cssText;
+    
+    // המרה של newlines ל-<br>
+    div.innerHTML = value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+    
+    activeEl.parentNode.replaceChild(div, activeEl);
+    divToUse = div;
+    console.log('✅ TEXTAREA הומר');
+    
+  } else if (activeEl.tagName === 'DIV' && activeEl.contentEditable === 'true') {
+    console.log('✅ זה כבר DIV contentEditable');
+    divToUse = activeEl;
   } else {
-    document.execCommand('backColor', false, color);
+    console.log('❌ לא textarea ולא div contentEditable');
+    alert('בחר דף לעריכה');
+    return;
   }
   
-  // שמור את הדף
-  const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-  if (element && element.innerHTML) {
-    this.savePage(this.activeTextareaIndex, element.innerHTML);
+  // חפש את הטקסט ב-DIV וצבע
+  const treeWalker = document.createTreeWalker(
+    divToUse,
+    NodeFilter.SHOW_TEXT,
+    null,
+    false
+  );
+  
+  let node;
+  let found = false;
+  
+  while (node = treeWalker.nextNode()) {
+    if (node.textContent.includes(selectedText)) {
+      const range = document.createRange();
+      const startIndex = node.textContent.indexOf(selectedText);
+      range.setStart(node, startIndex);
+      range.setEnd(node, startIndex + selectedText.length);
+      
+      const sel2 = window.getSelection();
+      sel2.removeAllRanges();
+      sel2.addRange(range);
+      
+      // צבע את הטקסט
+      if (type === 'text') {
+        document.execCommand('foreColor', false, color);
+      } else {
+        document.execCommand('backColor', false, color);
+      }
+      
+      // שמור את הדף
+      this.savePage(this.activeTextareaIndex, divToUse.innerHTML);
+      
+      console.log('✅ צביעה בוצעה');
+      found = true;
+      break;
+    }
   }
   
-  // נקה את ה-selection ששמרנו
-  this.savedSelection = null;
+  if (!found) {
+    console.log('❌ הטקסט לא נמצא');
+    alert('לא יכול למצוא את הטקסט המסומן');
+  }
   
   // סגור פיקר
   setTimeout(() => {
