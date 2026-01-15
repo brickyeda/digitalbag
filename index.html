@@ -4475,35 +4475,37 @@ height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .timer-input-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #667eea;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
 }
 
 .timer-time-input {
-  width: 100px;
-  padding: 16px;
-  font-size: 2rem;
+  width: 110px;
+  padding: 18px 10px;
+  font-size: 2.2rem;
   text-align: center;
-  border: 3px solid #e2e8f0;
-  border-radius: 15px;
+  border: 3px solid #667eea;
+  border-radius: 12px;
   font-weight: 700;
-  color: #6366f1;
+  color: #667eea;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(139, 92, 246, 0.05));
   transition: all 0.3s ease;
   font-family: 'Courier New', monospace;
 }
 
 .timer-time-input:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-  transform: scale(1.05);
+  border-color: #764ba2;
+  box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.2);
+  transform: scale(1.08);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(139, 92, 246, 0.15));
 }
 
 .timer-time-input.highlight {
@@ -6991,18 +6993,18 @@ height: 100%;
               <!-- Timer Input -->
               <div class="timer-input-section">
                 <div class="timer-input-group">
-                  <input type="number" id="timerHours" value="0" min="0" max="23">
-                  <label>שעות</label>
+                  <label class="timer-input-label">שעות</label>
+                  <input type="number" id="timerHours" value="0" min="0" max="23" class="timer-time-input">
                 </div>
                 <span class="timer-input-separator">:</span>
                 <div class="timer-input-group">
-                  <input type="number" id="timerMinutes" value="0" min="0" max="59">
-                  <label>דקות</label>
+                  <label class="timer-input-label">דקות</label>
+                  <input type="number" id="timerMinutes" value="0" min="0" max="59" class="timer-time-input">
                 </div>
                 <span class="timer-input-separator">:</span>
                 <div class="timer-input-group">
-                  <input type="number" id="timerSeconds" value="0" min="0" max="59">
-                  <label>שניות</label>
+                  <label class="timer-input-label">שניות</label>
+                  <input type="number" id="timerSeconds" value="0" min="0" max="59" class="timer-time-input">
                 </div>
               </div>
 
@@ -9843,10 +9845,20 @@ toggleGlobalColorPicker(type) {
 
 applyColor(type, color) {
   const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-  if (!element) return;
+  if (!element) {
+    alert('בחר דף לעריכה');
+    return;
+  }
   
-  // אם זה contentEditable - פשוט תעשה את זה!
+  // אם זה contentEditable - השתמש ב-execCommand
   if (element.getAttribute('data-is-richtext') === 'true') {
+    // שמור את הבחירה הנוכחית
+    const sel = window.getSelection();
+    if (sel.rangeCount === 0) {
+      alert('בחר טקסט כדי לצבוע אותו');
+      return;
+    }
+    
     if (type === 'text') {
       document.execCommand('foreColor', false, color);
     } else {
@@ -9864,24 +9876,31 @@ applyColor(type, color) {
       return;
     }
     
-    const selectedText = element.value.substring(start, end);
+    // שנה ל contentEditable כדי שניתן יהיה להשתמש בexecCommand
+    this.convertTextareaToContentEditable(this.activeTextareaIndex);
     
-    // עבור textarea, ניצור span עם span בתוכו עם צבע
-    // זה קצת מסובך, אז נשתמש בcontent editable
-    // בואו נחזור לפורמט עם HTML
-    if (type === 'text') {
-      // שנה ל contentEditable אם צריך
-      this.convertTextareaToContentEditable(this.activeTextareaIndex);
-      
-      // עכשיו צבע את הטקסט המסומן
-      document.execCommand('foreColor', false, color);
-      this.savePage(this.activeTextareaIndex, element.innerHTML);
-    } else {
-      // צבע רקע - גם זה צריך contentEditable
-      this.convertTextareaToContentEditable(this.activeTextareaIndex);
-      document.execCommand('backColor', false, color);
-      this.savePage(this.activeTextareaIndex, element.innerHTML);
-    }
+    // אחרי ההמרה, התן זמן וצבע את הטקסט
+    setTimeout(() => {
+      const convertedEl = document.getElementById(`textarea-${this.activeTextareaIndex}`);
+      if (convertedEl) {
+        // העתק את הבחירה ל-contentEditable
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.setStart(convertedEl, 0);
+        range.setEnd(convertedEl, 0);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        
+        // צבע את הטקסט
+        if (type === 'text') {
+          document.execCommand('foreColor', false, color);
+        } else {
+          document.execCommand('backColor', false, color);
+        }
+        
+        this.savePage(this.activeTextareaIndex, convertedEl.innerHTML);
+      }
+    }, 50);
   }
   
   // סגור פיקר
@@ -17179,5 +17198,8 @@ window.TutorialSystem = TutorialSystem;
   </div>
   <div id="notificationPermissionBanner" style="display: none; background: #fff3cd; padding: 10px 15px; text-align: center; border-bottom: 1px solid #ffc107; position: relative; z-index: 100000;">
     <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התרא</div>
+</body>
+</html>
+</div>
 </body>
 </html>
