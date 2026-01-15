@@ -7821,6 +7821,7 @@ height: 100%;
     // אפליקציה ראשית
     const app = {
 autoSaveInterval: null,
+      savedSelection: null,  // לשמירת בחירת טקסט לצביעה
       // נתונים
       currentNotebook: null,
       activeTextareaIndex: undefined,
@@ -9495,6 +9496,14 @@ updatePageTitle(pageIndex, newTitle) {
           const page = textarea.closest('.notebook-page');
           if (page) {
             page.classList.add('active-page');
+            
+            // הוסף mouseup listener כדי לשמור בחירה לצביעה
+            page.addEventListener('mouseup', () => {
+              const sel = window.getSelection();
+              if (sel.rangeCount > 0) {
+                this.savedSelection = sel.getRangeAt(0);
+              }
+            });
           }
         }
       },
@@ -9844,15 +9853,24 @@ toggleGlobalColorPicker(type) {
 },
 
 applyColor(type, color) {
-  const sel = window.getSelection();
-  
-  // בדוק אם יש בחירה
-  if (sel.rangeCount === 0 || sel.toString().length === 0) {
+  // בדוק אם יש selection שמורה
+  if (!this.savedSelection) {
     alert('בחר טקסט כדי לצבוע אותו');
     return;
   }
   
-  // צבע את הטקסט ישירות עם execCommand
+  // החזר את ה-selection ששמרנו
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(this.savedSelection);
+  
+  // בדוק שיש בחירה
+  if (sel.toString().length === 0) {
+    alert('בחר טקסט כדי לצבוע אותו');
+    return;
+  }
+  
+  // צבע את הטקסט עם execCommand
   if (type === 'text') {
     document.execCommand('foreColor', false, color);
   } else {
@@ -9864,6 +9882,9 @@ applyColor(type, color) {
   if (element && element.innerHTML) {
     this.savePage(this.activeTextareaIndex, element.innerHTML);
   }
+  
+  // נקה את ה-selection ששמרנו
+  this.savedSelection = null;
   
   // סגור פיקר
   setTimeout(() => {
