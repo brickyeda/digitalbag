@@ -9844,63 +9844,25 @@ toggleGlobalColorPicker(type) {
 },
 
 applyColor(type, color) {
-  const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-  if (!element) {
-    alert('בחר דף לעריכה');
+  const sel = window.getSelection();
+  
+  // בדוק אם יש בחירה
+  if (sel.rangeCount === 0 || sel.toString().length === 0) {
+    alert('בחר טקסט כדי לצבוע אותו');
     return;
   }
   
-  // אם זה contentEditable - השתמש ב-execCommand
-  if (element.getAttribute('data-is-richtext') === 'true') {
-    // שמור את הבחירה הנוכחית
-    const sel = window.getSelection();
-    if (sel.rangeCount === 0) {
-      alert('בחר טקסט כדי לצבוע אותו');
-      return;
-    }
-    
-    if (type === 'text') {
-      document.execCommand('foreColor', false, color);
-    } else {
-      document.execCommand('backColor', false, color);
-    }
-    this.savePage(this.activeTextareaIndex, element.innerHTML);
+  // צבע את הטקסט ישירות עם execCommand
+  if (type === 'text') {
+    document.execCommand('foreColor', false, color);
   } else {
-    // textarea - צבע רק את הטקסט המסומן
-    const start = element.selectionStart;
-    const end = element.selectionEnd;
-    
-    // אם אין טקסט מסומן, לא עשה כלום
-    if (start === end) {
-      alert('בחר טקסט כדי לצבוע אותו');
-      return;
-    }
-    
-    // שנה ל contentEditable כדי שניתן יהיה להשתמש בexecCommand
-    this.convertTextareaToContentEditable(this.activeTextareaIndex);
-    
-    // אחרי ההמרה, התן זמן וצבע את הטקסט
-    setTimeout(() => {
-      const convertedEl = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-      if (convertedEl) {
-        // העתק את הבחירה ל-contentEditable
-        const sel = window.getSelection();
-        const range = document.createRange();
-        range.setStart(convertedEl, 0);
-        range.setEnd(convertedEl, 0);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        
-        // צבע את הטקסט
-        if (type === 'text') {
-          document.execCommand('foreColor', false, color);
-        } else {
-          document.execCommand('backColor', false, color);
-        }
-        
-        this.savePage(this.activeTextareaIndex, convertedEl.innerHTML);
-      }
-    }, 50);
+    document.execCommand('backColor', false, color);
+  }
+  
+  // שמור את הדף
+  const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
+  if (element && element.innerHTML) {
+    this.savePage(this.activeTextareaIndex, element.innerHTML);
   }
   
   // סגור פיקר
