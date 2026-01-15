@@ -4487,9 +4487,9 @@ height: 100%;
 }
 
 .timer-time-input {
-  width: 80px;
-  padding: 12px;
-  font-size: 1.5rem;
+  width: 100px;
+  padding: 16px;
+  font-size: 2rem;
   text-align: center;
   border: 3px solid #e2e8f0;
   border-radius: 15px;
@@ -4522,13 +4522,13 @@ height: 100%;
 
 .timer-presets {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 2px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
   margin-top: 20px;        /* ← הוסף שורה זו! */
   margin-bottom: 1px;
 }
 .timer-preset {
-  padding: 0px;
+  padding: 15px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
   border: 2px solid #e2e8f0;
   border-radius: 15px;
@@ -7500,7 +7500,7 @@ height: 100%;
       <div class="about-contact">
         <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
         <div class="about-contact-email">
-          <a href="mailto:brickyeda@gmail.com">brickyeda@gmail.com</a>
+          <a href="/cdn-cgi/l/email-protection#c2a0b0aba1a9bba7a6a382a5afa3abaeeca1adaf"><span class="__cf_email__" data-cfemail="9dffeff4fef6e4f8f9fcddfaf0fcf4f1b3fef2f0">[email&#160;protected]</span></a>
         </div>
       </div>
       
@@ -7547,7 +7547,7 @@ height: 100%;
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // ========== About Modal Functions ==========
     function openAboutModal() {
       document.getElementById('aboutModal').classList.add('active');
@@ -9845,13 +9845,6 @@ applyColor(type, color) {
   const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
   if (!element) return;
   
-  // החזר את הסימון ששמרנו!
-  if (this.savedSelection) {
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(this.savedSelection);
-  }
-  
   // אם זה contentEditable - פשוט תעשה את זה!
   if (element.getAttribute('data-is-richtext') === 'true') {
     if (type === 'text') {
@@ -9861,16 +9854,35 @@ applyColor(type, color) {
     }
     this.savePage(this.activeTextareaIndex, element.innerHTML);
   } else {
-    // textarea - שנה את כל הדף
+    // textarea - צבע רק את הטקסט המסומן
+    const start = element.selectionStart;
+    const end = element.selectionEnd;
+    
+    // אם אין טקסט מסומן, לא עשה כלום
+    if (start === end) {
+      alert('בחר טקסט כדי לצבוע אותו');
+      return;
+    }
+    
+    const selectedText = element.value.substring(start, end);
+    
+    // עבור textarea, ניצור span עם span בתוכו עם צבע
+    // זה קצת מסובך, אז נשתמש בcontent editable
+    // בואו נחזור לפורמט עם HTML
     if (type === 'text') {
-      element.style.color = color;
+      // שנה ל contentEditable אם צריך
+      this.convertTextareaToContentEditable(this.activeTextareaIndex);
+      
+      // עכשיו צבע את הטקסט המסומן
+      document.execCommand('foreColor', false, color);
+      this.savePage(this.activeTextareaIndex, element.innerHTML);
     } else {
-      element.style.backgroundColor = color;
+      // צבע רקע - גם זה צריך contentEditable
+      this.convertTextareaToContentEditable(this.activeTextareaIndex);
+      document.execCommand('backColor', false, color);
+      this.savePage(this.activeTextareaIndex, element.innerHTML);
     }
   }
-  
-  // נקה את הסימון השמור
-  this.savedSelection = null;
   
   // סגור פיקר
   setTimeout(() => {
@@ -13242,18 +13254,29 @@ const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth()
         // מילוי הטופס עם הנתונים הקיימים
         document.getElementById('eventTitle').value = event.title;
         document.getElementById('eventDate').value = event.date;
-        document.getElementById('eventType').value = event.type;
         document.getElementById('eventLocation').value = event.location || '';
         document.getElementById('eventDescription').value = event.description || '';
-        document.getElementById('eventAllDay').checked = event.isAllDay;
+        document.getElementById('allDayEvent').checked = event.isAllDay;
         document.getElementById('eventStartTime').value = event.startTime || '08:00';
         document.getElementById('eventEndTime').value = event.endTime || '09:00';
         
+        // בחר את סוג האירוע הנכון
+        document.querySelectorAll('.event-type-option').forEach(el => {
+          el.classList.remove('selected');
+          if (el.dataset.type === event.type) {
+            el.classList.add('selected');
+          }
+        });
+        this.selectedEventType = event.type;
+        
+        // שנה את כותרת המודל
+        document.querySelector('.modal-title').innerHTML = `<span>✏️</span> עריכת אירוע`;
+        
         // שינוי כפתור השמירה לעדכון
-        const saveBtn = modal.querySelector('.modal-footer button:first-child');
-        if (saveBtn) {
-          saveBtn.textContent = '🔄 עדכן אירוע';
-          saveBtn.onclick = () => this.updateEvent(eventId);
+        const primaryBtn = modal.querySelector('.btn-primary');
+        if (primaryBtn) {
+          primaryBtn.innerHTML = '<span>🔄</span> עדכן אירוע';
+          primaryBtn.onclick = () => this.updateEvent(eventId);
         }
       },
       
@@ -13261,10 +13284,10 @@ const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth()
       updateEvent(eventId) {
         const title = document.getElementById('eventTitle').value.trim();
         const date = document.getElementById('eventDate').value;
-        const type = document.getElementById('eventType').value;
+        const type = this.selectedEventType; // השתמש בסוג שנבחר
         const location = document.getElementById('eventLocation').value;
         const description = document.getElementById('eventDescription').value;
-        const isAllDay = document.getElementById('eventAllDay').checked;
+        const isAllDay = document.getElementById('allDayEvent').checked;
         const startTime = document.getElementById('eventStartTime').value;
         const endTime = document.getElementById('eventEndTime').value;
         
@@ -17155,7 +17178,6 @@ window.TutorialSystem = TutorialSystem;
     <button onclick="app.closeNotificationsPanel();">✕</button>
   </div>
   <div id="notificationPermissionBanner" style="display: none; background: #fff3cd; padding: 10px 15px; text-align: center; border-bottom: 1px solid #ffc107; position: relative; z-index: 100000;">
-    <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התראות כדי לקבל תזכורות</div>
-    <button onclick="app.requestNotificationPermission()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; pointer-</div>
+    <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התרא</div>
 </body>
 </html>
