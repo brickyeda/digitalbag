@@ -10722,7 +10722,16 @@ async exportNotebookToPDF() {
           
           const isGridPage = pageEl.classList.contains('grid-page');
           const textarea = pageEl.querySelector('textarea');
-          const text = textarea ? textarea.value || '' : '';
+          const divEl = pageEl.querySelector('div[contenteditable="true"]');
+          
+          // קח את הטקסט מ-textarea או מ-DIV
+          let text = '';
+          if (textarea) {
+            text = textarea.value || '';
+          } else if (divEl) {
+            text = divEl.textContent || '';
+          }
+          
           const textLines = text.split('\n');
           const shapes = pageEl.querySelectorAll('.interactive-shape');
           
@@ -10841,9 +10850,16 @@ async exportNotebookToPDF() {
       } else {
         // אם אין ציורים - ייצא טקסט רגיל
         const textarea = pageEl.querySelector('textarea');
-        if (!textarea) continue;
+        const divEl = pageEl.querySelector('div[contenteditable="true"]');
         
-        const text = textarea.value || '';
+        // קח את הטקסט מ-textarea או מ-DIV
+        let text = '';
+        if (textarea) {
+          text = textarea.value || '';
+        } else if (divEl) {
+          text = divEl.textContent || '';
+        }
+        
         if (!text.trim()) continue;
         
         const textLines = text.split('\n');
