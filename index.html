@@ -4475,37 +4475,35 @@ height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .timer-input-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #667eea;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 
 .timer-time-input {
-  width: 110px;
-  padding: 18px 10px;
-  font-size: 2.2rem;
+  width: 80px;
+  padding: 12px;
+  font-size: 1.5rem;
   text-align: center;
-  border: 3px solid #667eea;
-  border-radius: 12px;
+  border: 3px solid #e2e8f0;
+  border-radius: 15px;
   font-weight: 700;
-  color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(139, 92, 246, 0.05));
+  color: #6366f1;
   transition: all 0.3s ease;
   font-family: 'Courier New', monospace;
 }
 
 .timer-time-input:focus {
   outline: none;
-  border-color: #764ba2;
-  box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.2);
-  transform: scale(1.08);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  transform: scale(1.05);
 }
 
 .timer-time-input.highlight {
@@ -4524,13 +4522,13 @@ height: 100%;
 
 .timer-presets {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 2px;
   margin-top: 20px;        /* ← הוסף שורה זו! */
   margin-bottom: 1px;
 }
 .timer-preset {
-  padding: 15px;
+  padding: 0px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
   border: 2px solid #e2e8f0;
   border-radius: 15px;
@@ -6993,18 +6991,18 @@ height: 100%;
               <!-- Timer Input -->
               <div class="timer-input-section">
                 <div class="timer-input-group">
-                  <label class="timer-input-label">שעות</label>
-                  <input type="number" id="timerHours" value="0" min="0" max="23" class="timer-time-input">
+                  <input type="number" id="timerHours" value="0" min="0" max="23">
+                  <label>שעות</label>
                 </div>
                 <span class="timer-input-separator">:</span>
                 <div class="timer-input-group">
-                  <label class="timer-input-label">דקות</label>
-                  <input type="number" id="timerMinutes" value="0" min="0" max="59" class="timer-time-input">
+                  <input type="number" id="timerMinutes" value="0" min="0" max="59">
+                  <label>דקות</label>
                 </div>
                 <span class="timer-input-separator">:</span>
                 <div class="timer-input-group">
-                  <label class="timer-input-label">שניות</label>
-                  <input type="number" id="timerSeconds" value="0" min="0" max="59" class="timer-time-input">
+                  <input type="number" id="timerSeconds" value="0" min="0" max="59">
+                  <label>שניות</label>
                 </div>
               </div>
 
@@ -7502,7 +7500,7 @@ height: 100%;
       <div class="about-contact">
         <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
         <div class="about-contact-email">
-          <a href="/cdn-cgi/l/email-protection#c2a0b0aba1a9bba7a6a382a5afa3abaeeca1adaf"><span class="__cf_email__" data-cfemail="9dffeff4fef6e4f8f9fcddfaf0fcf4f1b3fef2f0">[email&#160;protected]</span></a>
+          <a href="/cdn-cgi/l/email-protection#f1938398929a88949590b1969c90989ddf929e9c"><span class="__cf_email__" data-cfemail="01637368626a7864656041666c60686d2f626e6c">[email&#160;protected]</span></a>
         </div>
       </div>
       
@@ -7821,7 +7819,6 @@ height: 100%;
     // אפליקציה ראשית
     const app = {
 autoSaveInterval: null,
-      savedSelection: null,  // לשמירת בחירת טקסט לצביעה
       // נתונים
       currentNotebook: null,
       activeTextareaIndex: undefined,
@@ -10722,16 +10719,7 @@ async exportNotebookToPDF() {
           
           const isGridPage = pageEl.classList.contains('grid-page');
           const textarea = pageEl.querySelector('textarea');
-          const divEl = pageEl.querySelector('div[contenteditable="true"]');
-          
-          // קח את הטקסט מ-textarea או מ-DIV
-          let text = '';
-          if (textarea) {
-            text = textarea.value || '';
-          } else if (divEl) {
-            text = divEl.textContent || '';
-          }
-          
+          const text = textarea ? textarea.value || '' : '';
           const textLines = text.split('\n');
           const shapes = pageEl.querySelectorAll('.interactive-shape');
           
@@ -10850,16 +10838,9 @@ async exportNotebookToPDF() {
       } else {
         // אם אין ציורים - ייצא טקסט רגיל
         const textarea = pageEl.querySelector('textarea');
-        const divEl = pageEl.querySelector('div[contenteditable="true"]');
+        if (!textarea) continue;
         
-        // קח את הטקסט מ-textarea או מ-DIV
-        let text = '';
-        if (textarea) {
-          text = textarea.value || '';
-        } else if (divEl) {
-          text = divEl.textContent || '';
-        }
-        
+        const text = textarea.value || '';
         if (!text.trim()) continue;
         
         const textLines = text.split('\n');
@@ -13360,29 +13341,18 @@ const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth()
         // מילוי הטופס עם הנתונים הקיימים
         document.getElementById('eventTitle').value = event.title;
         document.getElementById('eventDate').value = event.date;
+        document.getElementById('eventType').value = event.type;
         document.getElementById('eventLocation').value = event.location || '';
         document.getElementById('eventDescription').value = event.description || '';
-        document.getElementById('allDayEvent').checked = event.isAllDay;
+        document.getElementById('eventAllDay').checked = event.isAllDay;
         document.getElementById('eventStartTime').value = event.startTime || '08:00';
         document.getElementById('eventEndTime').value = event.endTime || '09:00';
         
-        // בחר את סוג האירוע הנכון
-        document.querySelectorAll('.event-type-option').forEach(el => {
-          el.classList.remove('selected');
-          if (el.dataset.type === event.type) {
-            el.classList.add('selected');
-          }
-        });
-        this.selectedEventType = event.type;
-        
-        // שנה את כותרת המודל
-        document.querySelector('.modal-title').innerHTML = `<span>✏️</span> עריכת אירוע`;
-        
         // שינוי כפתור השמירה לעדכון
-        const primaryBtn = modal.querySelector('.btn-primary');
-        if (primaryBtn) {
-          primaryBtn.innerHTML = '<span>🔄</span> עדכן אירוע';
-          primaryBtn.onclick = () => this.updateEvent(eventId);
+        const saveBtn = modal.querySelector('.modal-footer button:first-child');
+        if (saveBtn) {
+          saveBtn.textContent = '🔄 עדכן אירוע';
+          saveBtn.onclick = () => this.updateEvent(eventId);
         }
       },
       
@@ -13390,10 +13360,10 @@ const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth()
       updateEvent(eventId) {
         const title = document.getElementById('eventTitle').value.trim();
         const date = document.getElementById('eventDate').value;
-        const type = this.selectedEventType; // השתמש בסוג שנבחר
+        const type = document.getElementById('eventType').value;
         const location = document.getElementById('eventLocation').value;
         const description = document.getElementById('eventDescription').value;
-        const isAllDay = document.getElementById('allDayEvent').checked;
+        const isAllDay = document.getElementById('eventAllDay').checked;
         const startTime = document.getElementById('eventStartTime').value;
         const endTime = document.getElementById('eventEndTime').value;
         
@@ -17284,9 +17254,4 @@ window.TutorialSystem = TutorialSystem;
     <button onclick="app.closeNotificationsPanel();">✕</button>
   </div>
   <div id="notificationPermissionBanner" style="display: none; background: #fff3cd; padding: 10px 15px; text-align: center; border-bottom: 1px solid #ffc107; position: relative; z-index: 100000;">
-    <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התרא</div>
-</body>
-</html>
-</div>
-</body>
-</html>
+    <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התרא
