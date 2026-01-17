@@ -7500,7 +7500,7 @@ height: 100%;
       <div class="about-contact">
         <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
         <div class="about-contact-email">
-          <a href="/cdn-cgi/l/email-protection#3557475c565e4c505154755258545c591b565a58"><span class="__cf_email__" data-cfemail="3b5949525850425e5f5a7b5c565a525715585456">[email&#160;protected]</span></a>
+          <a href="/cdn-cgi/l/email-protection#f1938398929a88949590b1969c90989ddf929e9c"><span class="__cf_email__" data-cfemail="01637368626a7864656041666c60686d2f626e6c">[email&#160;protected]</span></a>
         </div>
       </div>
       
@@ -9493,6 +9493,15 @@ updatePageTitle(pageIndex, newTitle) {
           const page = textarea.closest('.notebook-page');
           if (page) {
             page.classList.add('active-page');
+            
+            // הוסף mouseup listener כדי לשמור בחירה לצביעה
+            page.addEventListener('mouseup', () => {
+              const sel = window.getSelection();
+              if (sel.rangeCount > 0 && sel.toString().length > 0) {
+                window.savedColorText = sel.toString();
+                window.savedColorSelection = sel.getRangeAt(0);
+              }
+            });
           }
         }
       },
@@ -9842,35 +9851,125 @@ toggleGlobalColorPicker(type) {
 },
 
 applyColor(type, color) {
-  const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-  if (!element) return;
-  
-  // החזר את הסימון ששמרנו!
-  if (this.savedSelection) {
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(this.savedSelection);
+  // בדוק אם יש בחירה שמורה מ-mouseup listener
+  if (!window.savedColorText || !window.savedColorSelection) {
+    alert('בחר טקסט כדי לצבוע אותו');
+    return;
   }
   
-  // אם זה contentEditable - פשוט תעשה את זה!
-  if (element.getAttribute('data-is-richtext') === 'true') {
-    if (type === 'text') {
-      document.execCommand('foreColor', false, color);
-    } else {
-      document.execCommand('backColor', false, color);
+  const selectedText = window.savedColorText;
+  const sel = window.getSelection();
+  
+  console.log('🎨 צביעה:', selectedText.substring(0, 30));
+  
+  let el = document.getElementById(`textarea-${this.activeTextareaIndex}`);
+  if (!el) {
+    alert('בחר דף לעריכה');
+    return;
+  }
+  
+  console.log('📍 element:', el.tagName);
+  
+  // אם זה TEXTAREA, המר ל-DIV
+  if (el.tagName === 'TEXTAREA') {
+    console.log('🔄 המרת TEXTAREA');
+    
+    const value = el.value;
+    const div = document.createElement('div');
+    div.id = el.id;
+    div.className = el.className;
+    div.contentEditable = 'true';
+    div.style.cssText = el.style.cssText;
+    div.innerHTML = value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+    
+    el.parentNode.replaceChild(div, el);
+    el = div;
+  }
+  
+  // בנה רשימה של כל text nodes
+  let allText = '';
+  let nodes = [];
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+  let node;
+  
+  while (node = walker.nextNode()) {
+    nodes.push(node);
+    allText += node.textContent;
+  }
+  
+  console.log('📊 searching in', allText.length, 'chars');
+  
+  // חפש את הטקסט
+  const idx = allText.indexOf(selectedText);
+  
+  if (idx === -1) {
+    console.log('❌ טקסט לא נמצא');
+    alert('לא יכול למצוא את הטקסט');
+    window.savedColorText = null;
+    window.savedColorSelection = null;
+    return;
+  }
+  
+  console.log('✅ found at index', idx);
+  
+  // בנה range
+  let currentPos = 0;
+  let startNode = null, startOffset = 0;
+  let endNode = null, endOffset = 0;
+  
+  for (let i = 0; i < nodes.length; i++) {
+    const nodeText = nodes[i].textContent;
+    const nodeStart = currentPos;
+    const nodeEnd = currentPos + nodeText.length;
+    
+    if (!startNode && idx >= nodeStart && idx < nodeEnd) {
+      startNode = nodes[i];
+      startOffset = idx - nodeStart;
     }
-    this.savePage(this.activeTextareaIndex, element.innerHTML);
+    
+    if (startNode && (idx + selectedText.length) >= nodeStart && (idx + selectedText.length) <= nodeEnd) {
+      endNode = nodes[i];
+      endOffset = (idx + selectedText.length) - nodeStart;
+    }
+    
+    currentPos = nodeEnd;
+  }
+  
+  if (!startNode || !endNode) {
+    console.log('❌ range error');
+    alert('שגיאה בבנייה של selection');
+    return;
+  }
+  
+  // בנה range וצבע
+  const range = document.createRange();
+  range.setStart(startNode, startOffset);
+  range.setEnd(endNode, endOffset);
+  
+  sel.removeAllRanges();
+  sel.addRange(range);
+  
+  console.log('📌 range ready');
+  
+  // צבע
+  if (type === 'text') {
+    document.execCommand('foreColor', false, color);
   } else {
-    // textarea - שנה את כל הדף
-    if (type === 'text') {
-      element.style.color = color;
-    } else {
-      element.style.backgroundColor = color;
-    }
+    document.execCommand('backColor', false, color);
   }
   
-  // נקה את הסימון השמור
-  this.savedSelection = null;
+  // שמור
+  this.savePage(this.activeTextareaIndex, el.innerHTML);
+  
+  // נקה
+  window.savedColorText = null;
+  window.savedColorSelection = null;
+  
+  console.log('✅ צביעה בוצעה');
   
   // סגור פיקר
   setTimeout(() => {
@@ -10620,7 +10719,16 @@ async exportNotebookToPDF() {
           
           const isGridPage = pageEl.classList.contains('grid-page');
           const textarea = pageEl.querySelector('textarea');
-          const text = textarea ? textarea.value || '' : '';
+          const divEl = pageEl.querySelector('div[contenteditable="true"]');
+          
+          // קח את הטקסט מ-textarea או מ-DIV
+          let text = '';
+          if (textarea) {
+            text = textarea.value || '';
+          } else if (divEl) {
+            text = divEl.textContent || '';
+          }
+          
           const textLines = text.split('\n');
           const shapes = pageEl.querySelectorAll('.interactive-shape');
           
@@ -10739,9 +10847,16 @@ async exportNotebookToPDF() {
       } else {
         // אם אין ציורים - ייצא טקסט רגיל
         const textarea = pageEl.querySelector('textarea');
-        if (!textarea) continue;
+        const divEl = pageEl.querySelector('div[contenteditable="true"]');
         
-        const text = textarea.value || '';
+        // קח את הטקסט מ-textarea או מ-DIV
+        let text = '';
+        if (textarea) {
+          text = textarea.value || '';
+        } else if (divEl) {
+          text = divEl.textContent || '';
+        }
+        
         if (!text.trim()) continue;
         
         const textLines = text.split('\n');
