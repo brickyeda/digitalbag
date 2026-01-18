@@ -10610,10 +10610,28 @@ async exportNotebookToPDF() {
             });
           }
         } else if (node.nodeType === Node.ELEMENT_NODE) {
+          // בדוק אם זה אלמנט שיוצר שורה חדשה
+          const tagName = node.tagName.toUpperCase();
+          
+          // BR תמיד יוצר שורה חדשה
+          if (tagName === 'BR') {
+            lines.push([...currentLine]);
+            currentLine = [];
+            return;
+          }
+          
+          // DIV יוצר שורה חדשה לפני ואחרי (אם יש תוכן)
+          const isBlockElement = ['DIV', 'P', 'LI', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(tagName);
+          
+          if (isBlockElement && currentLine.length > 0) {
+            lines.push([...currentLine]);
+            currentLine = [];
+          }
+          
           let color = inheritedColor;
           
           // בדוק צבע מתגית font
-          if (node.tagName === 'FONT' && node.getAttribute('color')) {
+          if (tagName === 'FONT' && node.getAttribute('color')) {
             color = node.getAttribute('color');
           }
           
@@ -10625,6 +10643,12 @@ async exportNotebookToPDF() {
           // עבור על ילדים
           for (const child of node.childNodes) {
             processNode(child, color);
+          }
+          
+          // אחרי אלמנט בלוק, סיים שורה
+          if (isBlockElement && currentLine.length > 0) {
+            lines.push([...currentLine]);
+            currentLine = [];
           }
         }
       };
