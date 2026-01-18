@@ -7500,7 +7500,7 @@ height: 100%;
       <div class="about-contact">
         <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
         <div class="about-contact-email">
-          <a href="/cdn-cgi/l/email-protection#f1938398929a88949590b1969c90989ddf929e9c"><span class="__cf_email__" data-cfemail="01637368626a7864656041666c60686d2f626e6c">[email&#160;protected]</span></a>
+          <a href="/cdn-cgi/l/email-protection#d2b0a0bbb1b9abb7b6b392b5bfb3bbbefcb1bdbf"><span class="__cf_email__" data-cfemail="a0c2d2c9c3cbd9c5c4c1e0c7cdc1c9cc8ec3cfcd">[email&#160;protected]</span></a>
         </div>
       </div>
       
@@ -9493,15 +9493,6 @@ updatePageTitle(pageIndex, newTitle) {
           const page = textarea.closest('.notebook-page');
           if (page) {
             page.classList.add('active-page');
-            
-            // הוסף mouseup listener כדי לשמור בחירה לצביעה
-            page.addEventListener('mouseup', () => {
-              const sel = window.getSelection();
-              if (sel.rangeCount > 0 && sel.toString().length > 0) {
-                window.savedColorText = sel.toString();
-                window.savedColorSelection = sel.getRangeAt(0);
-              }
-            });
           }
         }
       },
@@ -9851,125 +9842,35 @@ toggleGlobalColorPicker(type) {
 },
 
 applyColor(type, color) {
-  // בדוק אם יש בחירה שמורה מ-mouseup listener
-  if (!window.savedColorText || !window.savedColorSelection) {
-    alert('בחר טקסט כדי לצבוע אותו');
-    return;
+  const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
+  if (!element) return;
+  
+  // החזר את הסימון ששמרנו!
+  if (this.savedSelection) {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(this.savedSelection);
   }
   
-  const selectedText = window.savedColorText;
-  const sel = window.getSelection();
-  
-  console.log('🎨 צביעה:', selectedText.substring(0, 30));
-  
-  let el = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-  if (!el) {
-    alert('בחר דף לעריכה');
-    return;
-  }
-  
-  console.log('📍 element:', el.tagName);
-  
-  // אם זה TEXTAREA, המר ל-DIV
-  if (el.tagName === 'TEXTAREA') {
-    console.log('🔄 המרת TEXTAREA');
-    
-    const value = el.value;
-    const div = document.createElement('div');
-    div.id = el.id;
-    div.className = el.className;
-    div.contentEditable = 'true';
-    div.style.cssText = el.style.cssText;
-    div.innerHTML = value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
-    
-    el.parentNode.replaceChild(div, el);
-    el = div;
-  }
-  
-  // בנה רשימה של כל text nodes
-  let allText = '';
-  let nodes = [];
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
-  let node;
-  
-  while (node = walker.nextNode()) {
-    nodes.push(node);
-    allText += node.textContent;
-  }
-  
-  console.log('📊 searching in', allText.length, 'chars');
-  
-  // חפש את הטקסט
-  const idx = allText.indexOf(selectedText);
-  
-  if (idx === -1) {
-    console.log('❌ טקסט לא נמצא');
-    alert('לא יכול למצוא את הטקסט');
-    window.savedColorText = null;
-    window.savedColorSelection = null;
-    return;
-  }
-  
-  console.log('✅ found at index', idx);
-  
-  // בנה range
-  let currentPos = 0;
-  let startNode = null, startOffset = 0;
-  let endNode = null, endOffset = 0;
-  
-  for (let i = 0; i < nodes.length; i++) {
-    const nodeText = nodes[i].textContent;
-    const nodeStart = currentPos;
-    const nodeEnd = currentPos + nodeText.length;
-    
-    if (!startNode && idx >= nodeStart && idx < nodeEnd) {
-      startNode = nodes[i];
-      startOffset = idx - nodeStart;
+  // אם זה contentEditable - פשוט תעשה את זה!
+  if (element.getAttribute('data-is-richtext') === 'true') {
+    if (type === 'text') {
+      document.execCommand('foreColor', false, color);
+    } else {
+      document.execCommand('backColor', false, color);
     }
-    
-    if (startNode && (idx + selectedText.length) >= nodeStart && (idx + selectedText.length) <= nodeEnd) {
-      endNode = nodes[i];
-      endOffset = (idx + selectedText.length) - nodeStart;
-    }
-    
-    currentPos = nodeEnd;
-  }
-  
-  if (!startNode || !endNode) {
-    console.log('❌ range error');
-    alert('שגיאה בבנייה של selection');
-    return;
-  }
-  
-  // בנה range וצבע
-  const range = document.createRange();
-  range.setStart(startNode, startOffset);
-  range.setEnd(endNode, endOffset);
-  
-  sel.removeAllRanges();
-  sel.addRange(range);
-  
-  console.log('📌 range ready');
-  
-  // צבע
-  if (type === 'text') {
-    document.execCommand('foreColor', false, color);
+    this.savePage(this.activeTextareaIndex, element.innerHTML);
   } else {
-    document.execCommand('backColor', false, color);
+    // textarea - שנה את כל הדף
+    if (type === 'text') {
+      element.style.color = color;
+    } else {
+      element.style.backgroundColor = color;
+    }
   }
   
-  // שמור
-  this.savePage(this.activeTextareaIndex, el.innerHTML);
-  
-  // נקה
-  window.savedColorText = null;
-  window.savedColorSelection = null;
-  
-  console.log('✅ צביעה בוצעה');
+  // נקה את הסימון השמור
+  this.savedSelection = null;
   
   // סגור פיקר
   setTimeout(() => {
@@ -10700,16 +10601,24 @@ async exportNotebookToPDF() {
     for (let pageIdx = 0; pageIdx < pageElements.length; pageIdx++) {
       const pageEl = pageElements[pageIdx];
       
-      // בדוק אם יש ציורים או צורות בדף
+      // בדוק אם יש ציורים או צורות או טקסט צבעוני בדף
+      const richTextElement = pageEl.querySelector('[data-is-richtext="true"]');
       const hasDrawings = pageEl.querySelector('canvas') || pageEl.querySelector('.interactive-shape') || pageEl.querySelector('.draggable-image') || pageEl.querySelector('.dropped-formula');
+      // בדיקה משופרת לטקסט צבעוני - כולל font tags ו-style עם color
+      const hasColoredText = richTextElement && (
+        richTextElement.innerHTML.includes('color=') || 
+        richTextElement.innerHTML.includes('color:') || 
+        richTextElement.innerHTML.includes('<font') ||
+        richTextElement.innerHTML.includes('background')
+      );
       
-      if (hasDrawings) {
-        // אם יש ציורים או צורות - ייצוא משולב
+      if (hasDrawings || hasColoredText) {
+        // אם יש ציורים או צורות או טקסט צבעוני - צלם את כל הדף כתמונה
         try {
           loadingMessage.innerHTML = `
             <div style="margin-bottom: 15px;">📄</div>
             <div>יוצר PDF...</div>
-            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">מייצא דף ${pageIdx + 1} עם ציורים...</div>
+            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">מייצא דף ${pageIdx + 1}${hasColoredText ? ' עם טקסט צבעוני' : ' עם ציורים'}...</div>
           `;
           
           if (!isFirstPdfPage) {
@@ -10717,201 +10626,152 @@ async exportNotebookToPDF() {
           }
           isFirstPdfPage = false;
           
-          const isGridPage = pageEl.classList.contains('grid-page');
-          const textarea = pageEl.querySelector('textarea');
-          const divEl = pageEl.querySelector('div[contenteditable="true"]');
+          // צילום כל הדף כתמונה - שומר על צבעים ומיקום מדויק
+          await new Promise(r => setTimeout(r, 100));
           
-          // קח את הטקסט מ-textarea או מ-DIV
-          let text = '';
-          if (textarea) {
-            text = textarea.value || '';
-          } else if (divEl) {
-            text = divEl.textContent || '';
+          const pageCanvas = await html2canvas(pageEl, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#f8fafc',
+            logging: false
+          });
+          
+          // חישוב גודל התמונה ב-PDF
+          const imgData = pageCanvas.toDataURL('image/png');
+          const imgWidth = pageWidth - 10; // שוליים קטנים
+          const imgHeight = (pageCanvas.height * imgWidth) / pageCanvas.width;
+          
+          // אם התמונה גבוהה מדי, התאם לגובה העמוד
+          const maxHeight = pageHeight - 20;
+          let finalWidth = imgWidth;
+          let finalHeight = imgHeight;
+          
+          if (imgHeight > maxHeight) {
+            finalHeight = maxHeight;
+            finalWidth = (pageCanvas.width * finalHeight) / pageCanvas.height;
           }
           
-          const textLines = text.split('\n');
-          const shapes = pageEl.querySelectorAll('.interactive-shape');
+          // מרכז את התמונה בעמוד
+          const xPos = (pageWidth - finalWidth) / 2;
+          const yPos = 10;
           
-          // רקע
-          pdf.setFillColor(248, 250, 252);
-          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-          
-          // משבצות או שורות
-          if (isGridPage) {
-            pdf.setDrawColor(180, 200, 220);
-            pdf.setLineWidth(0.15);
-            for (let x = 10; x < pageWidth - 10; x += 5) pdf.line(x, 10, x, pageHeight - 10);
-            for (let y = 10; y < pageHeight - 10; y += 5) pdf.line(10, y, pageWidth - 10, y);
-          } else {
-            pdf.setDrawColor(210, 225, 240);
-            pdf.setLineWidth(0.2);
-            for (let y = marginTop; y < pageHeight - 15; y += lineHeight) pdf.line(15, y, pageWidth - 15, y);
-          }
-          
-          // קו אדום
-          pdf.setDrawColor(255, 107, 107);
-          pdf.setLineWidth(0.4);
-          pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
-          
-          // צילום כל הצורות
-          const pageRect = pageEl.getBoundingClientRect();
-          
-          for (const shape of shapes) {
-            const svg = shape.querySelector('svg');
-            if (!svg) continue;
-            
-            const shapeRect = shape.getBoundingClientRect();
-            
-            // תקן את ה-SVG viewBox
-            const polygon = svg.querySelector('polygon, rect, ellipse, path, circle');
-            if (polygon) {
-              const bbox = polygon.getBBox();
-              const padding = 5;
-              svg.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${bbox.width + padding*2} ${bbox.height + padding*2}`);
-            }
-            
-            await new Promise(r => setTimeout(r, 30));
-            
-            const shapeCanvas = await html2canvas(shape, {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: null,
-              logging: false
-            });
-            
-            // מיקום באחוזים
-            const xPercent = (shapeRect.left - pageRect.left + shapeRect.width/2) / pageRect.width;
-            const yPercent = (shapeRect.top - pageRect.top + shapeRect.height/2) / pageRect.height;
-            
-            const scaleX = pageWidth / pageRect.width;
-            
-            // שמור על יחס הגובה-רוחב המקורי של הצורה
-            const aspectRatio = shapeCanvas.height / shapeCanvas.width;
-            const shapeW = shapeRect.width * scaleX;
-            const shapeH = shapeW * aspectRatio;
-            
-            const shapeX = (xPercent * pageWidth) - (shapeW / 2);
-            const shapeY = (yPercent * pageHeight) - (shapeH / 2);
-            
-            const imgData = shapeCanvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', shapeX, shapeY, shapeW, shapeH);
-          }
-          
-          // ייצוא נוסחאות
-          const droppedFormulas = pageEl.querySelectorAll('.dropped-formula');
-          for (const formula of droppedFormulas) {
-            // הסתר ידיות וכפתור מחיקה לפני הצילום
-            const handles = formula.querySelectorAll('.formula-resize-handle, .formula-delete-btn');
-            handles.forEach(h => h.style.display = 'none');
-            
-            await new Promise(r => setTimeout(r, 30));
-            
-            const formulaCanvas = await html2canvas(formula, {
-              scale: 2,
-              backgroundColor: '#ffffff',
-              logging: false
-            });
-            
-            // החזר את הידיות
-            handles.forEach(h => h.style.display = '');
-            
-            const formulaRect = formula.getBoundingClientRect();
-            const scaleX = pageWidth / pageRect.width;
-            const scaleY = pageHeight / pageRect.height;
-            
-            const fX = (formulaRect.left - pageRect.left) * scaleX;
-            const fY = (formulaRect.top - pageRect.top) * scaleY;
-            const fW = formulaRect.width * scaleX;
-            const fH = formulaRect.height * scaleY;
-            
-            const imgData = formulaCanvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', fX, fY, fW, fH);
-          }
-          
-          // טקסט
-          pdf.setFontSize(14);
-          pdf.setTextColor(44, 62, 80);
-          let y = marginTop;
-          for (const line of textLines) {
-            if (line.trim()) {
-              const result = processLineForPDF(line);
-              pdf.text(result.text, result.isRTL ? pageWidth - marginRight : marginLeft, y, { align: result.isRTL ? 'right' : 'left' });
-            }
-            y += lineHeight;
-          }
+          pdf.addImage(imgData, 'PNG', xPos, yPos, finalWidth, finalHeight);
           
         } catch (drawingError) {
           console.error('שגיאה בייצוא ציורים:', drawingError);
         }
       } else {
-        // אם אין ציורים - ייצא טקסט רגיל
+        // אם אין ציורים - בדוק אם יש טקסט צבעוני
+        const richTextEl = pageEl.querySelector('[data-is-richtext="true"]');
         const textarea = pageEl.querySelector('textarea');
-        const divEl = pageEl.querySelector('div[contenteditable="true"]');
+        // בדיקה משופרת לטקסט צבעוני
+        const hasRichText = richTextEl && (
+          richTextEl.innerHTML.includes('color=') || 
+          richTextEl.innerHTML.includes('color:') || 
+          richTextEl.innerHTML.includes('<font') ||
+          richTextEl.innerHTML.includes('background')
+        );
         
-        // קח את הטקסט מ-textarea או מ-DIV
-        let text = '';
-        if (textarea) {
-          text = textarea.value || '';
-        } else if (divEl) {
-          text = divEl.textContent || '';
-        }
-        
-        if (!text.trim()) continue;
-        
-        const textLines = text.split('\n');
-        let currentLine = 0;
-        
-        while (currentLine < textLines.length) {
+        if (hasRichText && richTextEl) {
+          // יש טקסט צבעוני - צלם את כל הדף כתמונה
+          const text = richTextEl.innerText || '';
+          if (!text.trim()) continue;
+          
           if (!isFirstPdfPage) {
             pdf.addPage();
           }
           isFirstPdfPage = false;
           
-          // בדיקה אם זה דף משובץ או שורות
-          const isGridPage = pageEl.classList.contains('grid-page');
+          // צילום כל הדף כתמונה - שומר על צבעים ומיקום מדויק
+          await new Promise(r => setTimeout(r, 100));
           
-          if (isGridPage) {
-            // ציור משבצות
-            pdf.setDrawColor(200, 220, 240);
-            pdf.setLineWidth(0.1);
-            const gridSize = 5;
-            for (let x = 10; x < pageWidth - 10; x += gridSize) {
-              pdf.line(x, 20, x, pageHeight - 15);
-            }
-            for (let y = 20; y < pageHeight - 15; y += gridSize) {
-              pdf.line(10, y, pageWidth - 10, y);
-            }
-          } else {
-            // ציור קווי מחברת
-            pdf.setDrawColor(210, 225, 240);
-            pdf.setLineWidth(0.2);
-            for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
-              pdf.line(15, y, pageWidth - 15, y);
-            }
+          const pageCanvas = await html2canvas(pageEl, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#f8fafc',
+            logging: false
+          });
+          
+          // חישוב גודל התמונה ב-PDF
+          const imgData = pageCanvas.toDataURL('image/png');
+          const imgWidth = pageWidth - 10;
+          const imgHeight = (pageCanvas.height * imgWidth) / pageCanvas.width;
+          
+          const maxHeight = pageHeight - 20;
+          let finalWidth = imgWidth;
+          let finalHeight = imgHeight;
+          
+          if (imgHeight > maxHeight) {
+            finalHeight = maxHeight;
+            finalWidth = (pageCanvas.width * finalHeight) / pageCanvas.height;
           }
           
-          // קו שוליים אדום
-          pdf.setDrawColor(255, 107, 107);
-          pdf.setLineWidth(0.4);
-          pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
+          const xPos = (pageWidth - finalWidth) / 2;
+          const yPos = 10;
           
-          // כתיבת הטקסט
-          pdf.setTextColor(44, 62, 80);
-          let y = marginTop;
+          pdf.addImage(imgData, 'PNG', xPos, yPos, finalWidth, finalHeight);
           
-          for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
-            const line = textLines[currentLine];
-            if (line && line.trim()) {
-              const result = processLineForPDF(line);
-              if (result.isRTL) {
-                pdf.text(result.text, pageWidth - marginRight, y, { align: 'right' });
-              } else {
-                pdf.text(result.text, marginLeft, y, { align: 'left' });
+        } else if (textarea) {
+          // טקסט רגיל ללא צבעים
+          const text = textarea.value || '';
+          if (!text.trim()) continue;
+          
+          const textLines = text.split('\n');
+          let currentLine = 0;
+          
+          while (currentLine < textLines.length) {
+            if (!isFirstPdfPage) {
+              pdf.addPage();
+            }
+            isFirstPdfPage = false;
+            
+            // בדיקה אם זה דף משובץ או שורות
+            const isGridPage = pageEl.classList.contains('grid-page');
+            
+            if (isGridPage) {
+              // ציור משבצות
+              pdf.setDrawColor(200, 220, 240);
+              pdf.setLineWidth(0.1);
+              const gridSize = 5;
+              for (let x = 10; x < pageWidth - 10; x += gridSize) {
+                pdf.line(x, 20, x, pageHeight - 15);
+              }
+              for (let y = 20; y < pageHeight - 15; y += gridSize) {
+                pdf.line(10, y, pageWidth - 10, y);
+              }
+            } else {
+              // ציור קווי מחברת
+              pdf.setDrawColor(210, 225, 240);
+              pdf.setLineWidth(0.2);
+              for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
+                pdf.line(15, y, pageWidth - 15, y);
               }
             }
-            y += lineHeight;
-            currentLine++;
+            
+            // קו שוליים אדום
+            pdf.setDrawColor(255, 107, 107);
+            pdf.setLineWidth(0.4);
+            pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
+            
+            // כתיבת הטקסט
+            pdf.setTextColor(44, 62, 80);
+            let y = marginTop;
+            
+            for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
+              const line = textLines[currentLine];
+              if (line && line.trim()) {
+                const result = processLineForPDF(line);
+                if (result.isRTL) {
+                  pdf.text(result.text, pageWidth - marginRight, y, { align: 'right' });
+                } else {
+                  pdf.text(result.text, marginLeft, y, { align: 'left' });
+                }
+              }
+              y += lineHeight;
+              currentLine++;
+            }
           }
         }
       }
