@@ -10606,7 +10606,59 @@ async exportNotebookToPDF() {
       const richTextElement = pageEl.querySelector('[data-is-richtext="true"]');
       const hasStyledText = richTextElement && richTextElement.innerHTML && richTextElement.innerHTML !== richTextElement.innerText;
       
-      if (hasDrawings || hasStyledText) {
+      if (hasStyledText) {
+        // אם יש טקסט מעוצב - צלם את כל הדף כתמונה
+        try {
+          loadingMessage.innerHTML = `
+            <div style="margin-bottom: 15px;">📄</div>
+            <div>יוצר PDF...</div>
+            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">מייצא דף ${pageIdx + 1} עם עיצוב...</div>
+          `;
+          
+          if (!isFirstPdfPage) {
+            pdf.addPage();
+          }
+          isFirstPdfPage = false;
+          
+          // המתן קצת לפני הצילום
+          await new Promise(r => setTimeout(r, 100));
+          
+          // צלם את כל הדף
+          const pageCanvas = await html2canvas(pageEl, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#f8fafc',
+            logging: false
+          });
+          
+          // חשב את הגודל כך שיתאים לעמוד A4
+          const imgData = pageCanvas.toDataURL('image/png');
+          const canvasRatio = pageCanvas.height / pageCanvas.width;
+          const pdfRatio = pageHeight / pageWidth;
+          
+          let imgWidth, imgHeight, imgX, imgY;
+          
+          if (canvasRatio > pdfRatio) {
+            // התמונה יותר גבוהה - התאם לגובה
+            imgHeight = pageHeight - 10;
+            imgWidth = imgHeight / canvasRatio;
+            imgX = (pageWidth - imgWidth) / 2;
+            imgY = 5;
+          } else {
+            // התמונה יותר רחבה - התאם לרוחב
+            imgWidth = pageWidth - 10;
+            imgHeight = imgWidth * canvasRatio;
+            imgX = 5;
+            imgY = (pageHeight - imgHeight) / 2;
+          }
+          
+          pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth, imgHeight);
+          
+        } catch (error) {
+          console.error('שגיאה בייצוא דף מעוצב:', error);
+        }
+      } else if (hasDrawings) {
         // אם יש ציורים, צורות או טקסט מעוצב - ייצוא משולב
         try {
           loadingMessage.innerHTML = `
@@ -10721,74 +10773,46 @@ async exportNotebookToPDF() {
             pdf.addImage(imgData, 'PNG', fX, fY, fW, fH);
           }
           
-          // טקסט - אם יש עיצוב, צלם כתמונה. אחרת טקסט רגיל
-          if (hasStyledText && richTextElement) {
-            // צלם את אלמנט הטקסט המעוצב כתמונה
-            await new Promise(r => setTimeout(r, 50));
-            
-            const textCanvas = await html2canvas(richTextElement, {
-              scale: 3, // רזולוציה גבוהה לאיכות טובה
-              backgroundColor: null,
-              logging: false,
-              useCORS: true,
-              allowTaint: true
-            });
-            
-            const textRect = richTextElement.getBoundingClientRect();
-            const scaleX = pageWidth / pageRect.width;
-            const scaleY = pageHeight / pageRect.height;
-            
-            // חשב מיקום וגודל
-            const tX = (textRect.left - pageRect.left) * scaleX;
-            const tY = (textRect.top - pageRect.top) * scaleY;
-            const tW = textRect.width * scaleX;
-            const tH = textRect.height * scaleY;
-            
-            const imgData = textCanvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', tX, tY, tW, tH);
-          } else {
-            // טקסט רגיל ללא עיצוב
-            const text = textarea ? textarea.value || '' : '';
-            const textLines = text.split('\n');
-            
-            pdf.setFontSize(14);
-            pdf.setTextColor(44, 62, 80);
-            let y = marginTop;
-            for (const line of textLines) {
-              if (line.trim()) {
-                const result = processLineForPDF(line);
-                pdf.text(result.text, result.isRTL ? pageWidth - marginRight : marginLeft, y, { align: result.isRTL ? 'right' : 'left' });
-              }
-              y += lineHeight;
+          // טקסט רגיל (אם יש ציורים בלי טקסט מעוצב)
+          const text = textarea ? textarea.value || '' : '';
+          const textLines = text.split('\n');
+          
+          pdf.setFontSize(14);
+          pdf.setTextColor(44, 62, 80);
+          let y = marginTop;
+          for (const line of textLines) {
+            if (line.trim()) {
+              const result = processLineForPDF(line);
+              pdf.text(result.text, result.isRTL ? pageWidth - marginRight : marginLeft, y, { align: result.isRTL ? 'right' : 'left' });
             }
+            y += lineHeight;
           }
           
         } catch (drawingError) {
           console.error('שגיאה בייצוא ציורים:', drawingError);
         }
       } else {
-        // אם אין ציורים - בדוק אם יש טקסט מעוצב
-        const richTextEl = pageEl.querySelector('[data-is-richtext="true"]');
+        // אם אין ציורים ואין טקסט מעוצב - טקסט רגיל
         const textarea = pageEl.querySelector('textarea');
-        const hasStyledContent = richTextEl && richTextEl.innerHTML && richTextEl.innerHTML !== richTextEl.innerText;
+        if (!textarea) continue;
         
-        if (hasStyledContent && richTextEl) {
-          // יש טקסט מעוצב - צלם כתמונה
-          const text = richTextEl.innerText || '';
-          if (!text.trim()) continue;
-          
+        const text = textarea.value || '';
+        if (!text.trim()) continue;
+        
+        const textLines = text.split('\n');
+        let currentLine = 0;
+        
+        while (currentLine < textLines.length) {
           if (!isFirstPdfPage) {
             pdf.addPage();
           }
           isFirstPdfPage = false;
           
+          // בדיקה אם זה דף משובץ או שורות
           const isGridPage = pageEl.classList.contains('grid-page');
           
-          // רקע
-          pdf.setFillColor(248, 250, 252);
-          pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-          
           if (isGridPage) {
+            // ציור משבצות
             pdf.setDrawColor(200, 220, 240);
             pdf.setLineWidth(0.1);
             const gridSize = 5;
@@ -10799,6 +10823,7 @@ async exportNotebookToPDF() {
               pdf.line(10, y, pageWidth - 10, y);
             }
           } else {
+            // ציור קווי מחברת
             pdf.setDrawColor(210, 225, 240);
             pdf.setLineWidth(0.2);
             for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
@@ -10811,89 +10836,22 @@ async exportNotebookToPDF() {
           pdf.setLineWidth(0.4);
           pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
           
-          // צלם את הטקסט המעוצב
-          await new Promise(r => setTimeout(r, 50));
+          // כתיבת הטקסט
+          pdf.setTextColor(44, 62, 80);
+          let y = marginTop;
           
-          const pageRect = pageEl.getBoundingClientRect();
-          const textCanvas = await html2canvas(richTextEl, {
-            scale: 3,
-            backgroundColor: null,
-            logging: false,
-            useCORS: true,
-            allowTaint: true
-          });
-          
-          const textRect = richTextEl.getBoundingClientRect();
-          const scaleX = pageWidth / pageRect.width;
-          const scaleY = pageHeight / pageRect.height;
-          
-          const tX = (textRect.left - pageRect.left) * scaleX;
-          const tY = (textRect.top - pageRect.top) * scaleY;
-          const tW = textRect.width * scaleX;
-          const tH = textRect.height * scaleY;
-          
-          const imgData = textCanvas.toDataURL('image/png');
-          pdf.addImage(imgData, 'PNG', tX, tY, tW, tH);
-          
-        } else if (textarea) {
-          // טקסט רגיל ללא עיצוב
-          const text = textarea.value || '';
-          if (!text.trim()) continue;
-          
-          const textLines = text.split('\n');
-          let currentLine = 0;
-          
-          while (currentLine < textLines.length) {
-            if (!isFirstPdfPage) {
-              pdf.addPage();
-            }
-            isFirstPdfPage = false;
-            
-            // בדיקה אם זה דף משובץ או שורות
-            const isGridPage = pageEl.classList.contains('grid-page');
-            
-            if (isGridPage) {
-              // ציור משבצות
-              pdf.setDrawColor(200, 220, 240);
-              pdf.setLineWidth(0.1);
-              const gridSize = 5;
-              for (let x = 10; x < pageWidth - 10; x += gridSize) {
-                pdf.line(x, 20, x, pageHeight - 15);
-              }
-              for (let y = 20; y < pageHeight - 15; y += gridSize) {
-                pdf.line(10, y, pageWidth - 10, y);
-              }
-            } else {
-              // ציור קווי מחברת
-              pdf.setDrawColor(210, 225, 240);
-              pdf.setLineWidth(0.2);
-              for (let y = marginTop; y < pageHeight - 15; y += lineHeight) {
-                pdf.line(15, y, pageWidth - 15, y);
+          for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
+            const line = textLines[currentLine];
+            if (line && line.trim()) {
+              const result = processLineForPDF(line);
+              if (result.isRTL) {
+                pdf.text(result.text, pageWidth - marginRight, y, { align: 'right' });
+              } else {
+                pdf.text(result.text, marginLeft, y, { align: 'left' });
               }
             }
-            
-            // קו שוליים אדום
-            pdf.setDrawColor(255, 107, 107);
-            pdf.setLineWidth(0.4);
-            pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
-            
-            // כתיבת הטקסט
-            pdf.setTextColor(44, 62, 80);
-            let y = marginTop;
-            
-            for (let i = 0; i < linesPerPage && currentLine < textLines.length; i++) {
-              const line = textLines[currentLine];
-              if (line && line.trim()) {
-                const result = processLineForPDF(line);
-                if (result.isRTL) {
-                  pdf.text(result.text, pageWidth - marginRight, y, { align: 'right' });
-                } else {
-                  pdf.text(result.text, marginLeft, y, { align: 'left' });
-                }
-              }
-              y += lineHeight;
-              currentLine++;
-            }
+            y += lineHeight;
+            currentLine++;
           }
         }
       }
