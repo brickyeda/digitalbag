@@ -10584,7 +10584,7 @@ async exportNotebookToPDF() {
       return { text: englishPart + hebrewPart, isRTL: true };
     };
     
-    // פונקציה לחילוץ צבעים מ-HTML - מחזירה מערך של שורות עם קטעים צבעוניים
+    // פונקציה לחילוץ צבעים ועיצובים מ-HTML - מחזירה מערך של שורות עם קטעים צבעוניים ומעוצבים
     const parseColoredHTML = (html) => {
       // יצירת אלמנט זמני לפרסור
       const temp = document.createElement('div');
@@ -10593,7 +10593,7 @@ async exportNotebookToPDF() {
       const lines = [];
       let currentLine = [];
       
-      const processNode = (node, inheritedColor = null) => {
+      const processNode = (node, inheritedStyles = {}) => {
         if (node.nodeType === Node.TEXT_NODE) {
           const text = node.textContent;
           if (text) {
@@ -10601,7 +10601,14 @@ async exportNotebookToPDF() {
             const parts = text.split('\n');
             parts.forEach((part, idx) => {
               if (part) {
-                currentLine.push({ text: part, color: inheritedColor });
+                currentLine.push({ 
+                  text: part, 
+                  color: inheritedStyles.color || null,
+                  bold: inheritedStyles.bold || false,
+                  italic: inheritedStyles.italic || false,
+                  underline: inheritedStyles.underline || false,
+                  strikethrough: inheritedStyles.strikethrough || false
+                });
               }
               if (idx < parts.length - 1) {
                 lines.push([...currentLine]);
@@ -10628,21 +10635,54 @@ async exportNotebookToPDF() {
             currentLine = [];
           }
           
-          let color = inheritedColor;
+          // העתק סגנונות קיימים
+          let styles = { ...inheritedStyles };
           
           // בדוק צבע מתגית font
           if (tagName === 'FONT' && node.getAttribute('color')) {
-            color = node.getAttribute('color');
+            styles.color = node.getAttribute('color');
           }
           
           // בדוק צבע מ-style
           if (node.style && node.style.color) {
-            color = node.style.color;
+            styles.color = node.style.color;
+          }
+          
+          // בדוק Bold - תגיות B, STRONG או style
+          if (tagName === 'B' || tagName === 'STRONG') {
+            styles.bold = true;
+          }
+          if (node.style && (node.style.fontWeight === 'bold' || parseInt(node.style.fontWeight) >= 700)) {
+            styles.bold = true;
+          }
+          
+          // בדוק Italic - תגיות I, EM או style
+          if (tagName === 'I' || tagName === 'EM') {
+            styles.italic = true;
+          }
+          if (node.style && node.style.fontStyle === 'italic') {
+            styles.italic = true;
+          }
+          
+          // בדוק Underline - תגית U או style
+          if (tagName === 'U') {
+            styles.underline = true;
+          }
+          if (node.style && node.style.textDecoration && node.style.textDecoration.includes('underline')) {
+            styles.underline = true;
+          }
+          
+          // בדוק Strikethrough - תגיות S, STRIKE, DEL או style
+          if (tagName === 'S' || tagName === 'STRIKE' || tagName === 'DEL') {
+            styles.strikethrough = true;
+          }
+          if (node.style && node.style.textDecoration && node.style.textDecoration.includes('line-through')) {
+            styles.strikethrough = true;
           }
           
           // עבור על ילדים
           for (const child of node.childNodes) {
-            processNode(child, color);
+            processNode(child, styles);
           }
           
           // אחרי אלמנט בלוק, סיים שורה
@@ -10709,6 +10749,68 @@ async exportNotebookToPDF() {
       return namedColors[color.toLowerCase()] || { r: 44, g: 62, b: 80 };
     };
     
+    // פונקציית עזר לציור טקסט מעוצב ב-PDF
+    const drawStyledText = (pdf, segment, xPos, yPos, align) => {
+      if (!segment.text) return 0;
+      
+      // הגדר צבע
+      const rgb = colorToRGB(segment.color);
+      pdf.setTextColor(rgb.r, rgb.g, rgb.b);
+      
+      // הגדר גופן לפי עיצוב
+      let fontStyle = 'normal';
+      if (segment.bold && segment.italic) {
+        fontStyle = 'bolditalic';
+      } else if (segment.bold) {
+        fontStyle = 'bold';
+      } else if (segment.italic) {
+        fontStyle = 'italic';
+      }
+      
+      try {
+        pdf.setFont('Rubik', fontStyle);
+      } catch(e) {
+        // אם הגופן לא תומך בסגנון, השתמש ברגיל
+        pdf.setFont('Rubik', 'normal');
+      }
+      
+      // צייר את הטקסט
+      const textToDraw = align === 'right' ? segment.text.split('').reverse().join('') : segment.text;
+      pdf.text(textToDraw, xPos, yPos, { align: align });
+      
+      // חשב רוחב טקסט
+      const textWidth = pdf.getTextWidth(textToDraw);
+      
+      // צייר קו תחתון אם צריך
+      if (segment.underline) {
+        pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+        pdf.setLineWidth(0.3);
+        if (align === 'right') {
+          pdf.line(xPos - textWidth, yPos + 1, xPos, yPos + 1);
+        } else {
+          pdf.line(xPos, yPos + 1, xPos + textWidth, yPos + 1);
+        }
+      }
+      
+      // צייר קו חוצה אם צריך
+      if (segment.strikethrough) {
+        pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+        pdf.setLineWidth(0.3);
+        if (align === 'right') {
+          pdf.line(xPos - textWidth, yPos - 2, xPos, yPos - 2);
+        } else {
+          pdf.line(xPos, yPos - 2, xPos + textWidth, yPos - 2);
+        }
+      }
+      
+      // החזר גופן לרגיל
+      try {
+        pdf.setFont('Rubik', 'normal');
+      } catch(e) {}
+      
+      return textWidth;
+    };
+    
     // קבלת הדפים לייצוא
     const notebookContent = document.getElementById('notebookContent');
     const pagesToExport = notebookContent.querySelectorAll('.export-this-page');
@@ -10750,7 +10852,17 @@ async exportNotebookToPDF() {
           const hasColoredContent = richTextElement && (
             richTextElement.innerHTML.includes('color=') || 
             richTextElement.innerHTML.includes('color:') || 
-            richTextElement.innerHTML.includes('<font')
+            richTextElement.innerHTML.includes('<font') ||
+            richTextElement.innerHTML.includes('<b>') ||
+            richTextElement.innerHTML.includes('<strong>') ||
+            richTextElement.innerHTML.includes('<i>') ||
+            richTextElement.innerHTML.includes('<em>') ||
+            richTextElement.innerHTML.includes('<u>') ||
+            richTextElement.innerHTML.includes('<s>') ||
+            richTextElement.innerHTML.includes('<strike>') ||
+            richTextElement.innerHTML.includes('font-weight') ||
+            richTextElement.innerHTML.includes('font-style') ||
+            richTextElement.innerHTML.includes('text-decoration')
           );
           const text = richTextElement ? richTextElement.innerText || '' : (textarea ? textarea.value || '' : '');
           const textLines = text.split('\n');
@@ -10853,7 +10965,7 @@ async exportNotebookToPDF() {
             pdf.addImage(imgData, 'PNG', fX, fY, fW, fH);
           }
           
-          // טקסט - עם תמיכה בצבעים
+          // טקסט - עם תמיכה בצבעים ועיצובים
           pdf.setFontSize(14);
           let y = marginTop;
           
@@ -10884,18 +10996,7 @@ async exportNotebookToPDF() {
                 const reversedSegments = [...lineSegments].reverse();
                 
                 for (const segment of reversedSegments) {
-                  if (!segment.text) continue;
-                  
-                  const rgb = colorToRGB(segment.color);
-                  pdf.setTextColor(rgb.r, rgb.g, rgb.b);
-                  
-                  // הפוך טקסט עברי
-                  const processedText = segment.text.split('').reverse().join('');
-                  
-                  pdf.text(processedText, xPos, y, { align: 'right' });
-                  
-                  // חשב את רוחב הטקסט וזוז שמאלה
-                  const textWidth = pdf.getTextWidth(processedText);
+                  const textWidth = drawStyledText(pdf, segment, xPos, y, 'right');
                   xPos -= textWidth;
                 }
               } else {
@@ -10903,14 +11004,7 @@ async exportNotebookToPDF() {
                 let xPos = marginLeft;
                 
                 for (const segment of lineSegments) {
-                  if (!segment.text) continue;
-                  
-                  const rgb = colorToRGB(segment.color);
-                  pdf.setTextColor(rgb.r, rgb.g, rgb.b);
-                  
-                  pdf.text(segment.text, xPos, y, { align: 'left' });
-                  
-                  const textWidth = pdf.getTextWidth(segment.text);
+                  const textWidth = drawStyledText(pdf, segment, xPos, y, 'left');
                   xPos += textWidth;
                 }
               }
@@ -10940,7 +11034,17 @@ async exportNotebookToPDF() {
         const hasColoredContent = richTextEl && (
           richTextEl.innerHTML.includes('color=') || 
           richTextEl.innerHTML.includes('color:') || 
-          richTextEl.innerHTML.includes('<font')
+          richTextEl.innerHTML.includes('<font') ||
+          richTextEl.innerHTML.includes('<b>') ||
+          richTextEl.innerHTML.includes('<strong>') ||
+          richTextEl.innerHTML.includes('<i>') ||
+          richTextEl.innerHTML.includes('<em>') ||
+          richTextEl.innerHTML.includes('<u>') ||
+          richTextEl.innerHTML.includes('<s>') ||
+          richTextEl.innerHTML.includes('<strike>') ||
+          richTextEl.innerHTML.includes('font-weight') ||
+          richTextEl.innerHTML.includes('font-style') ||
+          richTextEl.innerHTML.includes('text-decoration')
         );
         
         // קבל את הטקסט מהמקור המתאים
@@ -11016,21 +11120,14 @@ async exportNotebookToPDF() {
                 const reversedSegments = [...lineSegments].reverse();
                 
                 for (const segment of reversedSegments) {
-                  if (!segment.text) continue;
-                  const rgb = colorToRGB(segment.color);
-                  pdf.setTextColor(rgb.r, rgb.g, rgb.b);
-                  const processedText = segment.text.split('').reverse().join('');
-                  pdf.text(processedText, xPos, y, { align: 'right' });
-                  xPos -= pdf.getTextWidth(processedText);
+                  const textWidth = drawStyledText(pdf, segment, xPos, y, 'right');
+                  xPos -= textWidth;
                 }
               } else {
                 let xPos = marginLeft;
                 for (const segment of lineSegments) {
-                  if (!segment.text) continue;
-                  const rgb = colorToRGB(segment.color);
-                  pdf.setTextColor(rgb.r, rgb.g, rgb.b);
-                  pdf.text(segment.text, xPos, y, { align: 'left' });
-                  xPos += pdf.getTextWidth(segment.text);
+                  const textWidth = drawStyledText(pdf, segment, xPos, y, 'left');
+                  xPos += textWidth;
                 }
               }
               
