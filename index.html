@@ -7500,7 +7500,7 @@ height: 100%;
       <div class="about-contact">
         <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
         <div class="about-contact-email">
-          <a href="/cdn-cgi/l/email-protection#583a2a313b33213d3c39183f35393134763b3735"><span class="__cf_email__" data-cfemail="f99b8b909a92809c9d98b99e94989095d79a9694">[email&#160;protected]</span></a>
+          <a href="mailto:BRICKYEDA@GMAIL.COM">BRICKYEDA@GMAIL.COM</a>
         </div>
       </div>
       
@@ -9849,6 +9849,33 @@ applyColor(type, color) {
   const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
   if (!element) return;
   
+  // אם זה עדיין textarea - המר ל-richtext קודם
+  if (element.tagName === 'TEXTAREA') {
+    // שמור את הבחירה
+    const start = element.selectionStart;
+    const end = element.selectionEnd;
+    const text = element.value;
+    
+    // אם יש טקסט נבחר, צור HTML עם צבע
+    if (start !== end) {
+      const before = text.substring(0, start);
+      const selected = text.substring(start, end);
+      const after = text.substring(end);
+      
+      let coloredText;
+      if (type === 'text') {
+        coloredText = `<font color="${color}">${selected}</font>`;
+      } else {
+        coloredText = `<span style="background-color: ${color};">${selected}</span>`;
+      }
+      
+      element.value = before + coloredText + after;
+      this.convertToRichText(this.activeTextareaIndex);
+      this.savePage(this.activeTextareaIndex, document.getElementById(`textarea-${this.activeTextareaIndex}`).innerHTML);
+    }
+    return;
+  }
+  
   // החזר את הסימון ששמרנו!
   if (this.savedSelection) {
     const sel = window.getSelection();
@@ -9864,13 +9891,6 @@ applyColor(type, color) {
       document.execCommand('backColor', false, color);
     }
     this.savePage(this.activeTextareaIndex, element.innerHTML);
-  } else {
-    // textarea - שנה את כל הדף
-    if (type === 'text') {
-      element.style.color = color;
-    } else {
-      element.style.backgroundColor = color;
-    }
   }
   
   // נקה את הסימון השמור
