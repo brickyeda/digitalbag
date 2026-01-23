@@ -7500,7 +7500,7 @@ height: 100%;
       <div class="about-contact">
         <div class="about-contact-label">📧 לשאלות, הצעות ומשוב</div>
         <div class="about-contact-email">
-          <a href="mailto:BRICKYEDA@GMAIL.COM">BRICKYEDA@GMAIL.COM</a>
+          <a href="/cdn-cgi/l/email-protection#2f6d7d666c64766a6b6e6f68626e6663016c6062"><span class="__cf_email__" data-cfemail="397b6b707a72607c7d78797e74787075177a7674">[email&#160;protected]</span></a>
         </div>
       </div>
       
@@ -7547,7 +7547,7 @@ height: 100%;
     </div>
   </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     // ========== About Modal Functions ==========
     function openAboutModal() {
       document.getElementById('aboutModal').classList.add('active');
@@ -9935,87 +9935,68 @@ applyColor(type, color) {
           
           // בחר את הדף הראשון אם קיים
           this.activeTextareaIndex = 0;
-          const textarea = document.getElementById(`textarea-0`);
-          if (textarea) {
-            textarea.focus();
-          } else {
-            alert('נא להקליק על הדף במחברת לפני שימוש בכלי זה');
-            return;
-          }
         }
 
-        const textarea = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-        if (!textarea) {
+        const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
+        if (!element) {
           alert('שגיאה: לא נמצא דף פעיל. נא להקליק על הדף במחברת');
           return;
         }
         
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selectedText = textarea.value.substring(start, end);
-        
-        let listText;
-        
-        // אם יש טקסט נבחר - הופך אותו לרשימה
-        if (selectedText && selectedText.trim()) {
-          if (listType === 'bullet') {
-            const lines = selectedText.split('\n');
-            listText = lines.map(line => line.trim() ? `• ${line.trim()}` : line).join('\n');
-          } else {
-            const lines = selectedText.split('\n').filter(line => line.trim());
-            listText = lines.map((line, i) => `${i + 1}. ${line.trim()}`).join('\n');
+        element.focus();
+
+        // אם זה textarea רגיל
+        if (element.tagName === 'TEXTAREA') {
+          const start = element.selectionStart;
+          const end = element.selectionEnd;
+          const selectedText = element.value.substring(start, end);
+          
+          let listText;
+          
+          // אם יש טקסט נבחר - הופך אותו לרשימה
+          if (selectedText && selectedText.trim()) {
+            if (listType === 'bullet') {
+              const lines = selectedText.split('\n');
+              listText = lines.map(line => line.trim() ? `• ${line.trim()}` : line).join('\n');
+            } else {
+              const lines = selectedText.split('\n').filter(line => line.trim());
+              listText = lines.map((line, i) => `${i + 1}. ${line.trim()}`).join('\n');
+            }
+            
+            element.value = element.value.substring(0, start) + listText + element.value.substring(end);
+            element.setSelectionRange(start + listText.length, start + listText.length);
+          } 
+          // אם אין טקסט נבחר - מוסיף פריט רשימה חדש
+          else {
+            listText = listType === 'bullet' ? '• ' : '1. ';
+            element.value = element.value.substring(0, start) + listText + element.value.substring(end);
+            element.setSelectionRange(start + listText.length, start + listText.length);
           }
           
-          textarea.value = textarea.value.substring(0, start) + listText + textarea.value.substring(end);
-          textarea.focus();
-          textarea.setSelectionRange(start + listText.length, start + listText.length);
-        } 
-        // אם אין טקסט נבחר - מוסיף פריט רשימה חדש
-        else {
-          // מציאת תחילת השורה הנוכחית
-          const beforeCursor = textarea.value.substring(0, start);
-          const lineStart = beforeCursor.lastIndexOf('\n') + 1;
-          const currentLine = textarea.value.substring(lineStart, start);
-          
-          // בדיקה אם כבר יש תבלית רשימה בשורה הנוכחית
-          const bulletMatch = currentLine.match(/^(\s*)(•|◦|▪)\s*/);
-          const numberedMatch = currentLine.match(/^(\s*)(\d+)\.\s*/);
-          
-          if (listType === 'bullet') {
-            if (!bulletMatch) {
-              // אם אין תבלית - מוסיף תבלית חדשה
-              listText = '• ';
-              textarea.value = textarea.value.substring(0, start) + listText + textarea.value.substring(end);
-              textarea.focus();
-              textarea.setSelectionRange(start + listText.length, start + listText.length);
-            } else {
-              // אם יש תבלית - מוסיף שורה חדשה עם תבלית
-              const indent = bulletMatch[1];
-              listText = '\n' + indent + '• ';
-              textarea.value = textarea.value.substring(0, end) + listText + textarea.value.substring(end);
-              textarea.focus();
-              textarea.setSelectionRange(end + listText.length, end + listText.length);
-            }
-          } else {
-            if (!numberedMatch) {
-              // אם אין מספור - מוסיף מספור חדש
-              listText = '1. ';
-              textarea.value = textarea.value.substring(0, start) + listText + textarea.value.substring(end);
-              textarea.focus();
-              textarea.setSelectionRange(start + listText.length, start + listText.length);
-            } else {
-              // אם יש מספור - מוסיף שורה חדשה עם המספר הבא
-              const indent = numberedMatch[1];
-              const currentNum = parseInt(numberedMatch[2]);
-              listText = '\n' + indent + (currentNum + 1) + '. ';
-              textarea.value = textarea.value.substring(0, end) + listText + textarea.value.substring(end);
-              textarea.focus();
-              textarea.setSelectionRange(end + listText.length, end + listText.length);
-            }
-          }
+          this.savePage(this.activeTextareaIndex, element.value);
         }
-        
-        this.savePage(this.activeTextareaIndex, textarea.value);
+        // אם זה contentEditable div
+        else {
+          const selection = window.getSelection();
+          const selectedText = selection.toString();
+          
+          if (selectedText && selectedText.trim()) {
+            // יש טקסט מסומן - הפוך לרשימה
+            const lines = selectedText.split('\n').filter(line => line.trim());
+            let listHTML;
+            if (listType === 'bullet') {
+              listHTML = '<ul>' + lines.map(line => `<li>${line.trim()}</li>`).join('') + '</ul>';
+            } else {
+              listHTML = '<ol>' + lines.map(line => `<li>${line.trim()}</li>`).join('') + '</ol>';
+            }
+            document.execCommand('insertHTML', false, listHTML);
+          } else {
+            // אין טקסט מסומן - הוסף פריט רשימה
+            const listText = listType === 'bullet' ? '• ' : '1. ';
+            document.execCommand('insertText', false, listText);
+          }
+          this.savePage(this.activeTextareaIndex, element.innerHTML);
+        }
       },
 
       // טיפול במקשים בתוך textarea (רשימות אוטומטיות)
@@ -10084,7 +10065,7 @@ applyColor(type, color) {
         }
       },
 
-      // הוספת סימן גלובלי
+      // הוספת סימן גלובלי - תומך גם ב-textarea וגם ב-contentEditable
       insertGlobalSymbol(symbol) {
         // אם אין דף פעיל, נסה לבחור את הדף הראשון
         if (this.activeTextareaIndex === undefined) {
@@ -10096,27 +10077,28 @@ applyColor(type, color) {
           
           // בחר את הדף הראשון
           this.activeTextareaIndex = 0;
-          const textarea = document.getElementById(`textarea-0`);
-          if (textarea) {
-            textarea.focus();
-          } else {
-            alert('נא להקליק על הדף במחברת לפני שימוש בכלי זה');
-            return;
-          }
         }
 
-        const textarea = document.getElementById(`textarea-${this.activeTextareaIndex}`);
-        if (!textarea) {
+        const element = document.getElementById(`textarea-${this.activeTextareaIndex}`);
+        if (!element) {
           alert('נא לבחור דף לעריכה');
           return;
         }
         
-        const start = textarea.selectionStart;
-        textarea.value = textarea.value.substring(0, start) + symbol + textarea.value.substring(start);
-        textarea.focus();
-        textarea.setSelectionRange(start + symbol.length, start + symbol.length);
-        
-        this.savePage(this.activeTextareaIndex, textarea.value);
+        element.focus();
+
+        // אם זה textarea רגיל
+        if (element.tagName === 'TEXTAREA') {
+          const start = element.selectionStart;
+          element.value = element.value.substring(0, start) + symbol + element.value.substring(start);
+          element.setSelectionRange(start + symbol.length, start + symbol.length);
+          this.savePage(this.activeTextareaIndex, element.value);
+        } 
+        // אם זה contentEditable div
+        else {
+          document.execCommand('insertText', false, symbol);
+          this.savePage(this.activeTextareaIndex, element.innerHTML);
+        }
       },
 
       // ניקוי עיצוב גלובלי
@@ -17773,6 +17755,93 @@ const TutorialSystem = {
 
 window.TutorialSystem = TutorialSystem;
 
+// המשך מספור/תבליטים אוטומטי בלחיצה על Enter ב-contentEditable
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  
+  const element = document.activeElement;
+  if (!element || !element.id || !element.id.startsWith('textarea-')) return;
+  if (element.tagName === 'TEXTAREA') return; // רק ל-contentEditable
+  
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+  
+  const range = selection.getRangeAt(0);
+  let node = range.startContainer;
+  
+  if (node.nodeType === 3) node = node.parentNode;
+  
+  const fullText = element.innerText;
+  const lines = fullText.split('\n');
+  
+  let charCount = 0;
+  let currentLineIndex = 0;
+  
+  const preCaretRange = range.cloneRange();
+  preCaretRange.selectNodeContents(element);
+  preCaretRange.setEnd(range.startContainer, range.startOffset);
+  const caretOffset = preCaretRange.toString().length;
+  
+  for (let i = 0; i < lines.length; i++) {
+    charCount += lines[i].length + 1;
+    if (caretOffset < charCount) {
+      currentLineIndex = i;
+      break;
+    }
+  }
+  
+  const currentLine = lines[currentLineIndex] || '';
+  
+  const numberedMatch = currentLine.match(/^(\s*)(\d+)\.\s*/);
+  const bulletMatch = currentLine.match(/^(\s*)(•|◦|▪)\s*/);
+  
+  if (numberedMatch) {
+    e.preventDefault();
+    const indent = numberedMatch[1];
+    const currentNum = parseInt(numberedMatch[2]);
+    const nextNum = currentNum + 1;
+    
+    const br = document.createElement('br');
+    const textNode = document.createTextNode(indent + nextNum + '. ');
+    
+    range.deleteContents();
+    range.insertNode(textNode);
+    range.insertNode(br);
+    
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    const pageIndex = parseInt(element.id.replace('textarea-', ''));
+    if (typeof app !== 'undefined' && app.savePage) {
+      app.savePage(pageIndex, element.innerHTML);
+    }
+  } 
+  else if (bulletMatch) {
+    e.preventDefault();
+    const indent = bulletMatch[1];
+    const bullet = bulletMatch[2];
+    
+    const br = document.createElement('br');
+    const textNode = document.createTextNode(indent + bullet + ' ');
+    
+    range.deleteContents();
+    range.insertNode(textNode);
+    range.insertNode(br);
+    
+    range.setStartAfter(textNode);
+    range.setEndAfter(textNode);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    const pageIndex = parseInt(element.id.replace('textarea-', ''));
+    if (typeof app !== 'undefined' && app.savePage) {
+      app.savePage(pageIndex, element.innerHTML);
+    }
+  }
+});
+
   </script>
 
 <!-- חלונית התראות - מחוץ לכל האלמנטים -->
@@ -17781,5 +17850,4 @@ window.TutorialSystem = TutorialSystem;
     <span>🔔 התראות קרובות</span>
     <button onclick="app.closeNotificationsPanel();">✕</button>
   </div>
-  <div id="notificationPermissionBanner" style="display: none; background: #fff3cd; padding: 10px 15px; text-align: center; border-bottom: 1px solid #ffc107; position: relative; z-index: 100000;">
-    <div style="margin-bottom: 8px; font-size: 0.9rem;">🔔 אשר התרא
+  <div id="notificationPermiss
