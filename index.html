@@ -9158,6 +9158,10 @@ saveCurrentNotebookDrawings() {
 
 // והוסף פונקציות חדשות:
 
+allowDrop(event) {
+  event.preventDefault();
+},
+
 dragFormula(event) {
   const formula = event.target.getAttribute('data-formula');
   event.dataTransfer.setData('text/plain', formula);
@@ -10396,36 +10400,382 @@ async exportCurrentPage() {
     return;
   }
   
-  const notebookContent = document.getElementById('notebookContent');
-  if (!notebookContent || !notebookContent.children.length) {
-    alert('אין דפים במחברת');
-    return;
-  }
-  
-  // מצא את הדף הנוכחי
-  let currentPageIndex = 0;
-  const children = Array.from(notebookContent.children);
-  for (let i = 0; i < children.length; i++) {
-    const rect = children[i].getBoundingClientRect();
-    if (rect.top >= 70 && rect.top < window.innerHeight) {
-      currentPageIndex = i;
-      break;
+  const loading = document.createElement('div');
+  loading.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:40px;border-radius:20px;box-shadow:0 10px 50px rgba(0,0,0,0.3);z-index:10001;text-align:center;';
+  loading.innerHTML = '<div style="margin-bottom:15px;font-size:2rem;">📄</div><div style="font-size:1.2rem;font-weight:600;">מייצא דף...</div>';
+  document.body.appendChild(loading);
+
+  try {
+    // טעינת ספריות
+    if (!window.jspdf) {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      document.head.appendChild(s);
+      await new Promise(r => setTimeout(r, 2000));
     }
-  }
-  
-  // הוסף class זמני רק לדף הנוכחי
-  const currentPage = children[currentPageIndex];
-  const pageElement = currentPage.querySelector('.lined-page, .grid-page, .blank-page');
-  if (pageElement) {
-    pageElement.classList.add('export-this-page');
-  }
-  
-  // קרא לפונקציה הקיימת
-  await this.exportNotebookToPDF();
-  
-  // הסר את ה-class
-  if (pageElement) {
-    pageElement.classList.remove('export-this-page');
+    if (!window.html2canvas) {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      document.head.appendChild(s);
+      await new Promise(r => setTimeout(r, 2000));
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    // טעינת גופן עברי
+    const fontResp = await fetch('https://fonts.gstatic.com/s/rubik/v28/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-B4i1UA.ttf');
+    const fontBuf = await fontResp.arrayBuffer();
+    const bytes = new Uint8Array(fontBuf);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    pdf.addFileToVFS('Rubik.ttf', btoa(binary));
+    pdf.addFont('Rubik.ttf', 'Rubik', 'normal');
+    pdf.setFont('Rubik');
+
+    const pageWidth = 210, pageHeight = 297, marginLeft = 20, marginTop = 30, lineHeight = 8, marginRight = 25;
+
+    // פונקציות עזר
+    const parseHTML = (el) => {
+      const lines = [];
+      let currentLine = [];
+      const processNode = (node, styles) => {
+        if (node.nodeType === 3) {
+          const text = node.textContent;
+          if (text.includes('\n')) {
+            text.split('\n').forEach((part, i, arr) => {
+              if (part) currentLine.push({ text: part, ...styles });
+              if (i < arr.length - 1) { lines.push([...currentLine]); currentLine = []; }
+            });
+          } else if (text) currentLine.push({ text, ...styles });
+        } else if (node.nodeType === 1) {
+          const tag = node.tagName;
+          if (tag === 'BR') { lines.push([...currentLine]); currentLine = []; return; }
+          if (['DIV','P'].includes(tag) && currentLine.length > 0) { lines.push([...currentLine]); currentLine = []; }
+          let newStyles = { ...styles };
+          if (tag === 'FONT' && node.getAttribute('color')) newStyles.color = node.getAttribute('color');
+          if (node.style?.color) newStyles.color = node.style.color;
+          if (node.style?.backgroundColor) newStyles.bgColor = node.style.backgroundColor;
+          if (tag === 'B' || tag === 'STRONG') newStyles.bold = true;
+          if (tag === 'U') newStyles.underline = true;
+          if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') newStyles.strike = true;
+          for (const child of node.childNodes) processNode(child, newStyles);
+          if (['DIV','P'].includes(tag) && currentLine.length > 0) { lines.push([...currentLine]); currentLine = []; }
+        }
+      };
+      processNode(el, { color: null, bold: false, underline: false, strike: false, bgColor: null });
+      if (currentLine.length > 0) lines.push(currentLine);
+      return lines;
+    };
+
+    const toRGB = (color) => {
+      if (!color) return { r: 44, g: 62, b: 80 };
+      if (color.startsWith('#')) {
+        const hex = color.slice(1);
+        if (hex.length === 3) return { r: parseInt(hex[0]+hex[0], 16), g: parseInt(hex[1]+hex[1], 16), b: parseInt(hex[2]+hex[2], 16) };
+        return { r: parseInt(hex.slice(0,2), 16), g: parseInt(hex.slice(2,4), 16), b: parseInt(hex.slice(4,6), 16) };
+      }
+      if (color.startsWith('rgb')) {
+        const m = color.match(/(\d+)/g);
+        if (m) return { r: +m[0], g: +m[1], b: +m[2] };
+      }
+      return { r: 44, g: 62, b: 80 };
+    };
+    
+    const splitSegment = (segment) => {
+      const parts = segment.text.match(/[\u0590-\u05FF]+|[^\u0590-\u05FF]+/g) || [segment.text];
+      return parts.map(part => ({
+        ...segment,
+        text: part,
+        isHebrew: /[\u0590-\u05FF]/.test(part)
+      }));
+    };
+
+    // מצא את הדף הנוכחי
+    const pageEl = document.querySelector('.lined-page, .grid-page, .blank-page');
+    if (!pageEl) {
+      throw new Error('לא נמצא דף');
+    }
+    
+    const pageRect = pageEl.getBoundingClientRect();
+    const scaleX = pageWidth / pageRect.width;
+    const isGridPage = pageEl.classList.contains('grid-page');
+
+    // רקע
+    pdf.setFillColor(248, 250, 252);
+    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+    
+    if (isGridPage) {
+      // קווי רשת לדף משובץ
+      pdf.setDrawColor(200, 220, 240);
+      pdf.setLineWidth(0.1);
+      const gridSize = 5;
+      for (let x = 10; x < pageWidth - 10; x += gridSize) {
+        pdf.line(x, 10, x, pageHeight - 10);
+      }
+      for (let y = 10; y < pageHeight - 10; y += gridSize) {
+        pdf.line(10, y, pageWidth - 10, y);
+      }
+    } else {
+      // קווים לדף שורות
+      pdf.setDrawColor(210, 225, 240);
+      pdf.setLineWidth(0.2);
+      for (let yLine = marginTop; yLine < pageHeight - 15; yLine += lineHeight) {
+        pdf.line(15, yLine, pageWidth - 15, yLine);
+      }
+      pdf.setDrawColor(255, 107, 107);
+      pdf.setLineWidth(0.4);
+      pdf.line(pageWidth - marginRight + 5, 15, pageWidth - marginRight + 5, pageHeight - 10);
+    }
+
+    // צורות
+    for (const shape of pageEl.querySelectorAll('.interactive-shape')) {
+      try {
+        const svg = shape.querySelector('svg');
+        if (svg) {
+          const polygon = svg.querySelector('polygon, rect, ellipse, path, circle');
+          if (polygon) {
+            const bbox = polygon.getBBox();
+            const padding = 5;
+            svg.setAttribute('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${bbox.width + padding*2} ${bbox.height + padding*2}`);
+          }
+        }
+        await new Promise(r => setTimeout(r, 30));
+        const shapeCanvas = await html2canvas(shape, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null, logging: false });
+        const shapeRect = shape.getBoundingClientRect();
+        const xPercent = (shapeRect.left - pageRect.left + shapeRect.width/2) / pageRect.width;
+        const yPercent = (shapeRect.top - pageRect.top + shapeRect.height/2) / pageRect.height;
+        const aspectRatio = shapeCanvas.height / shapeCanvas.width;
+        const shapeW = shapeRect.width * scaleX;
+        const shapeH = shapeW * aspectRatio;
+        const shapeX = (xPercent * pageWidth) - (shapeW / 2);
+        const shapeY = (yPercent * pageHeight) - (shapeH / 2);
+        pdf.addImage(shapeCanvas.toDataURL('image/png'), 'PNG', shapeX, shapeY, shapeW, shapeH);
+      } catch(e) { console.log('Shape error:', e); }
+    }
+
+    // ציורים
+    for (const canvas of pageEl.querySelectorAll('canvas')) {
+      try {
+        const r = canvas.getBoundingClientRect();
+        const xPercent = (r.left - pageRect.left + r.width/2) / pageRect.width;
+        const yPercent = (r.top - pageRect.top + r.height/2) / pageRect.height;
+        const aspectRatio = canvas.height / canvas.width;
+        const w = r.width * scaleX;
+        const h = w * aspectRatio;
+        const x = (xPercent * pageWidth) - (w / 2);
+        const yPos = (yPercent * pageHeight) - (h / 2);
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, yPos, w, h);
+      } catch(e) { console.log('Canvas error:', e); }
+    }
+
+    // נוסחאות
+    for (const formula of pageEl.querySelectorAll('.dropped-formula')) {
+      try {
+        const handles = formula.querySelectorAll('.formula-resize-handle, .formula-delete-btn');
+        handles.forEach(h => h.style.display = 'none');
+        await new Promise(r => setTimeout(r, 30));
+        const formulaCanvas = await html2canvas(formula, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null, logging: false });
+        handles.forEach(h => h.style.display = '');
+        const formulaRect = formula.getBoundingClientRect();
+        const xPercent = (formulaRect.left - pageRect.left + formulaRect.width/2) / pageRect.width;
+        const yPercent = (formulaRect.top - pageRect.top + formulaRect.height/2) / pageRect.height;
+        const aspectRatio = formulaCanvas.height / formulaCanvas.width;
+        const formulaW = formulaRect.width * scaleX;
+        const formulaH = formulaW * aspectRatio;
+        const formulaX = (xPercent * pageWidth) - (formulaW / 2);
+        const formulaY = (yPercent * pageHeight) - (formulaH / 2);
+        pdf.addImage(formulaCanvas.toDataURL('image/png'), 'PNG', formulaX, formulaY, formulaW, formulaH);
+      } catch(e) { console.log('Formula error:', e); }
+    }
+
+    // טקסט
+    const richText = pageEl.querySelector('[data-is-richtext="true"]');
+    const textarea = pageEl.querySelector('textarea');
+    const textElement = richText || textarea;
+    
+    let isPageRTL = true;
+    if (textElement) {
+      try {
+        isPageRTL = window.getComputedStyle(textElement).direction === 'rtl';
+      } catch(e) {
+        isPageRTL = true;
+      }
+    }
+    
+    let y = marginTop;
+    pdf.setFontSize(14);
+
+    if (richText) {
+      const coloredLines = parseHTML(richText);
+      
+      for (let lineSegments of coloredLines) {
+        if (y > pageHeight - 20) break;
+        if (lineSegments.length === 0) { y += lineHeight; continue; }
+        
+        const fullLineText = lineSegments.map(s => s.text).join('');
+        if (!fullLineText.trim()) { y += lineHeight; continue; }
+        
+        const hasHebrew = /[\u0590-\u05FF]/.test(fullLineText);
+        const hasEnglish = /[a-zA-Z]/.test(fullLineText);
+        
+        // עברית בלבד
+        if (hasHebrew && !hasEnglish) {
+          let xPos = pageWidth - marginRight;
+          
+          for (const segment of lineSegments) {
+            if (!segment.text) continue;
+            
+            const rgb = toRGB(segment.color);
+            pdf.setTextColor(rgb.r, rgb.g, rgb.b);
+            
+            const reversed = segment.text.split('').reverse().join('');
+            const textWidth = pdf.getTextWidth(reversed);
+            
+            if (segment.bgColor) {
+              const bgRgb = toRGB(segment.bgColor);
+              pdf.setFillColor(bgRgb.r, bgRgb.g, bgRgb.b);
+              pdf.rect(xPos - textWidth, y - 4.5, textWidth, 6, 'F');
+            }
+            
+            pdf.text(reversed, xPos, y, { align: 'right' });
+            if (segment.bold) pdf.text(reversed, xPos + 0.2, y, { align: 'right' });
+            
+            if (segment.underline) {
+              pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+              pdf.setLineWidth(0.4);
+              pdf.line(xPos - textWidth, y + 1.5, xPos, y + 1.5);
+            }
+            if (segment.strike) {
+              pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+              pdf.setLineWidth(0.4);
+              pdf.line(xPos - textWidth, y - 1.5, xPos, y - 1.5);
+            }
+            
+            xPos -= textWidth;
+          }
+        }
+        // אנגלית בלבד
+        else if (hasEnglish && !hasHebrew) {
+          let xPos = marginLeft;
+          
+          for (const segment of lineSegments) {
+            if (!segment.text) continue;
+            
+            const rgb = toRGB(segment.color);
+            pdf.setTextColor(rgb.r, rgb.g, rgb.b);
+            
+            const textWidth = pdf.getTextWidth(segment.text);
+            
+            if (segment.bgColor) {
+              const bgRgb = toRGB(segment.bgColor);
+              pdf.setFillColor(bgRgb.r, bgRgb.g, bgRgb.b);
+              pdf.rect(xPos, y - 4.5, textWidth, 6, 'F');
+            }
+            
+            pdf.text(segment.text, xPos, y);
+            if (segment.bold) pdf.text(segment.text, xPos + 0.2, y);
+            
+            if (segment.underline) {
+              pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+              pdf.setLineWidth(0.4);
+              pdf.line(xPos, y + 1.5, xPos + textWidth, y + 1.5);
+            }
+            if (segment.strike) {
+              pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+              pdf.setLineWidth(0.4);
+              pdf.line(xPos, y - 1.5, xPos + textWidth, y - 1.5);
+            }
+            
+            xPos += textWidth;
+          }
+        }
+        // מעורב עברית ואנגלית
+        else {
+          let allParts = [];
+          for (const segment of lineSegments) {
+            const parts = splitSegment(segment);
+            allParts = allParts.concat(parts);
+          }
+          
+          allParts = allParts.reverse();
+          
+          let totalWidth = 0;
+          for (const part of allParts) {
+            const displayText = part.isHebrew ? part.text.split('').reverse().join('') : part.text;
+            totalWidth += pdf.getTextWidth(displayText);
+          }
+          
+          let xPos = pageWidth - marginRight - totalWidth;
+          
+          for (const part of allParts) {
+            if (!part.text) continue;
+            
+            const rgb = toRGB(part.color);
+            pdf.setTextColor(rgb.r, rgb.g, rgb.b);
+            
+            const displayText = part.isHebrew ? part.text.split('').reverse().join('') : part.text;
+            const textWidth = pdf.getTextWidth(displayText);
+            
+            if (part.bgColor) {
+              const bgRgb = toRGB(part.bgColor);
+              pdf.setFillColor(bgRgb.r, bgRgb.g, bgRgb.b);
+              pdf.rect(xPos, y - 4.5, textWidth, 6, 'F');
+            }
+            
+            pdf.text(displayText, xPos, y);
+            if (part.bold) pdf.text(displayText, xPos + 0.2, y);
+            
+            if (part.underline) {
+              pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+              pdf.setLineWidth(0.4);
+              pdf.line(xPos, y + 1.5, xPos + textWidth, y + 1.5);
+            }
+            if (part.strike) {
+              pdf.setDrawColor(rgb.r, rgb.g, rgb.b);
+              pdf.setLineWidth(0.4);
+              pdf.line(xPos, y - 1.5, xPos + textWidth, y - 1.5);
+            }
+            
+            xPos += textWidth;
+          }
+        }
+        
+        y += lineHeight;
+      }
+    } else if (textarea) {
+      // טקסט רגיל מ-textarea
+      const lines = textarea.value.split('\n');
+      pdf.setTextColor(44, 62, 80);
+      
+      for (const line of lines) {
+        if (y > pageHeight - 20) break;
+        if (!line.trim()) { y += lineHeight; continue; }
+        
+        const hasHebrew = /[\u0590-\u05FF]/.test(line);
+        
+        if (hasHebrew) {
+          const reversed = line.split('').reverse().join('');
+          pdf.text(reversed, pageWidth - marginRight, y, { align: 'right' });
+        } else {
+          pdf.text(line, marginLeft, y);
+        }
+        
+        y += lineHeight;
+      }
+    }
+
+    // שמירת הקובץ
+    const notebook = this.subjects[this.currentNotebook];
+    const pg = notebook?.pages?.[notebook?.currentPage] || {};
+    pdf.save(`${notebook?.title || 'מחברת'} - ${pg.title || 'דף'}.pdf`);
+    
+    document.body.removeChild(loading);
+    
+  } catch(e) {
+    document.body.removeChild(loading);
+    alert('שגיאה בייצוא: ' + e.message);
+    console.error(e);
   }
 },
 
